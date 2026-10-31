@@ -1,8 +1,10 @@
 const { BasePage } = require('./BasePage');
+const { HeaderComponent } = require('../components/HeaderComponent');
 
 class InventoryPage extends BasePage {
   constructor(page) {
     super(page);
+    this.header = new HeaderComponent(page);
     this.title = page.getByTestId('title');
     this.sortDropdown = page.getByTestId('product-sort-container');
     this.items = page.getByTestId('inventory-item');

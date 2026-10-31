@@ -23,4 +23,11 @@ test.describe('inventory', () => {
     await expect(inventoryPage.itemImages).toHaveCount(PRODUCT_COUNT);
     await expect(inventoryPage.addToCartButtons).toHaveText(Array(PRODUCT_COUNT).fill('Add to cart'));
   });
+
+  test('shows an empty cart in the header after login @regression', async () => {
+    await expect(inventoryPage.header.cartLink).toBeVisible();
+    await expect(inventoryPage.header.cartBadge).toBeHidden();
+    await inventoryPage.header.openMenu();
+    await expect(inventoryPage.header.logoutLink).toBeVisible();
+  });
 });
