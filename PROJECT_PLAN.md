@@ -62,7 +62,7 @@ Credentials are public and are not secrets, but the project still reads them fro
 | Concern         | Choice                                   | Notes                                                  |
 |-----------------|------------------------------------------|--------------------------------------------------------|
 | Language        | JavaScript (CommonJS)                    | Matches the resume. TypeScript is a later migration.  |
-| Runtime         | Node.js 24 (installed: v24.18.0)         | Any LTS ≥ 18 works                                     |
+| Runtime         | Node.js 24 (installed: v24.18.0)         | Any LTS ≥ 20 works (Playwright 1.64 engines)           |
 | Test runner     | `@playwright/test`                       | Built-in fixtures, parallelism, retries, reporters    |
 | Browsers        | Chromium, Firefox, WebKit                | Chromium only during development                      |
 | Design pattern  | Page Object Model + custom fixtures      | See section 5                                          |
@@ -314,7 +314,7 @@ This is the single test to run when you want a 30-second health check of the who
 
 ```js
 // @ts-check
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({

@@ -1,11 +1,7 @@
 {
   "name": "shop-flow",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "description": "End-to-end test automation framework for SauceDemo built with Playwright",
   "scripts": {
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium",
@@ -16,15 +12,14 @@
     "report": "playwright show-report",
     "codegen": "playwright codegen https://www.saucedemo.com"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@types/node": "^26.6.6"
+    "@types/node": "^24"
   },
   "dependencies": {
     "dotenv": "^18.0.9"
-  }
+  },
+  "private": true
 }

@@ -1,5 +1,5 @@
 // @ts-check
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
