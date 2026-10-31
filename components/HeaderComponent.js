@@ -14,6 +14,11 @@ class HeaderComponent {
   async openMenu() {
     await this.menuButton.click();
   }
+
+  async logout() {
+    await this.openMenu();
+    await this.logoutLink.click();
+  }
 }
 
 module.exports = { HeaderComponent };
