@@ -5,8 +5,6 @@ const { LoginPage } = require('../../pages/LoginPage');
 const { InventoryPage } = require('../../pages/InventoryPage');
 const { users } = require('../../data/users');
 
-const LOGIN_URL = /saucedemo\.com\/$/;
-
 const invalidLogins = [
   {
     name: 'wrong password',
@@ -42,7 +40,7 @@ test.describe('login - negative', () => {
     await loginPage.login(users.lockedOut.username, users.lockedOut.password);
 
     await expect(loginPage.errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
-    await expect(page).toHaveURL(LOGIN_URL);
+    await expect(page).toHaveURL('/');
   });
 
   for (const c of invalidLogins) {
@@ -50,14 +48,14 @@ test.describe('login - negative', () => {
       await loginPage.login(c.username, c.password);
 
       await expect(loginPage.errorMessage).toHaveText(c.error);
-      await expect(page).toHaveURL(LOGIN_URL);
+      await expect(page).toHaveURL('/');
     });
   }
 
   test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({ page }) => {
     await inventoryPage.goto();
 
-    await expect(page).toHaveURL(LOGIN_URL);
+    await expect(page).toHaveURL('/');
     await expect(loginPage.errorMessage).toHaveText(
       "Epic sadface: You can only access '/inventory.html' when you are logged in."
     );

@@ -25,7 +25,7 @@ test.describe('login', () => {
 
     await inventoryPage.header.logout();
 
-    await expect(page).toHaveURL(/saucedemo\.com\/$/);
+    await expect(page).toHaveURL('/');
     await expect(loginPage.loginButton).toBeVisible();
   });
 
@@ -36,6 +36,8 @@ test.describe('login', () => {
     await loginPage.goto();
     await loginPage.login(users.performanceGlitch.username, users.performanceGlitch.password);
 
+    // This user stalls the page for about 5 s after login. Assertions wait it out with no sleep
+    // and no raised timeout: in testing even a 100 ms limit passed, because the check can't report until the page responds.
     await expect(page).toHaveURL(/\/inventory\.html$/);
     await expect(inventoryPage.title).toHaveText('Products');
   });
