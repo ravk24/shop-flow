@@ -1,0 +1,65 @@
+// These tests must start logged out. Phase 4 adds storageState for all other
+// specs; when it does, this file needs test.use({ storageState: { cookies: [], origins: [] } }).
+const { test, expect } = require('@playwright/test');
+const { LoginPage } = require('../../pages/LoginPage');
+const { InventoryPage } = require('../../pages/InventoryPage');
+const { users } = require('../../data/users');
+
+const LOGIN_URL = /saucedemo\.com\/$/;
+
+const invalidLogins = [
+  {
+    name: 'wrong password',
+    username: users.standard.username,
+    password: 'wrong_password',
+    error: 'Epic sadface: Username and password do not match any user in this service',
+  },
+  {
+    name: 'empty username and password',
+    username: '',
+    password: '',
+    error: 'Epic sadface: Username is required',
+  },
+  {
+    name: 'empty password',
+    username: users.standard.username,
+    password: '',
+    error: 'Epic sadface: Password is required',
+  },
+];
+
+test.describe('login - negative', () => {
+  let loginPage;
+  let inventoryPage;
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
+    inventoryPage = new InventoryPage(page);
+    await loginPage.goto();
+  });
+
+  test('shows locked out error for locked_out_user @regression @negative', async ({ page }) => {
+    await loginPage.login(users.lockedOut.username, users.lockedOut.password);
+
+    await expect(loginPage.errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
+    await expect(page).toHaveURL(LOGIN_URL);
+  });
+
+  for (const c of invalidLogins) {
+    test(`shows "${c.error}" for ${c.name} @regression @negative`, async ({ page }) => {
+      await loginPage.login(c.username, c.password);
+
+      await expect(loginPage.errorMessage).toHaveText(c.error);
+      await expect(page).toHaveURL(LOGIN_URL);
+    });
+  }
+
+  test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({ page }) => {
+    await inventoryPage.goto();
+
+    await expect(page).toHaveURL(LOGIN_URL);
+    await expect(loginPage.errorMessage).toHaveText(
+      "Epic sadface: You can only access '/inventory.html' when you are logged in."
+    );
+  });
+});
