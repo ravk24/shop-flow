@@ -9,7 +9,7 @@ class InventoryPage extends BasePage {
     this.itemNames = page.getByTestId('inventory-item-name');
     this.itemPrices = page.getByTestId('inventory-item-price');
     this.itemImages = this.items.getByRole('img');
-    this.itemButtons = this.items.getByRole('button');
+    this.addToCartButtons = page.getByTestId(/^add-to-cart-/);
   }
 
   async goto() {

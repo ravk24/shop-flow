@@ -21,6 +21,6 @@ test.describe('inventory', () => {
     await expect(inventoryPage.itemNames).toHaveText(Array(PRODUCT_COUNT).fill(/\S/));
     await expect(inventoryPage.itemPrices).toHaveText(Array(PRODUCT_COUNT).fill(/^\$\d+\.\d{2}$/));
     await expect(inventoryPage.itemImages).toHaveCount(PRODUCT_COUNT);
-    await expect(inventoryPage.itemButtons).toHaveText(Array(PRODUCT_COUNT).fill('Add to cart'));
+    await expect(inventoryPage.addToCartButtons).toHaveText(Array(PRODUCT_COUNT).fill('Add to cart'));
   });
 });
