@@ -27,6 +27,8 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 |------------------------|------------------------------------------------|
 | `npm test`             | Run the whole suite headless on Chromium       |
 | `npm run test:smoke`   | Run only tests tagged `@smoke`                 |
+| `npm run test:regression` | Run tests tagged `@regression` (excludes `@smoke`) |
+| `npm run test:negative` | Run only tests tagged `@negative`             |
 | `npm run test:headed`  | Run with a visible browser                     |
 | `npm run test:ui`      | Open Playwright UI mode                        |
 | `npm run test:debug`   | Step through with the Playwright Inspector     |
