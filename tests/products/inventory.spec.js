@@ -1,9 +1,8 @@
 const { test, expect } = require('@playwright/test');
 const { LoginPage } = require('../../pages/LoginPage');
 const { InventoryPage } = require('../../pages/InventoryPage');
+const { users } = require('../../data/users');
 
-const username = process.env.STANDARD_USER || 'standard_user';
-const password = process.env.PASSWORD || 'secret_sauce';
 const PRODUCT_COUNT = 6; // Phase 5 replaces this with data/products.js
 
 test.describe('inventory', () => {
@@ -12,7 +11,7 @@ test.describe('inventory', () => {
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login(username, password);
+    await loginPage.login(users.standard.username, users.standard.password);
     inventoryPage = new InventoryPage(page);
   });
 
