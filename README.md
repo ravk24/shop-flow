@@ -1,12 +1,12 @@
 # ShopFlow
 
-End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model.
+End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It is being built phase by phase to cover authentication, product listing, cart and checkout flows using the Page Object Model.
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
 ## Prerequisites
 
-- Node.js 18 or newer (developed on Node 24)
+- Node.js 20 or newer (developed on Node 24)
 - Git
 
 ## Install
