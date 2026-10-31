@@ -314,7 +314,7 @@ This is the single test to run when you want a 30-second health check of the who
 
 ```js
 // @ts-check
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
