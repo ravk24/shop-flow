@@ -7,6 +7,7 @@ class LoginPage extends BasePage {
     this.password = page.getByTestId('password');
     this.loginButton = page.getByTestId('login-button');
     this.errorMessage = page.getByTestId('error');
+    this.errorButton = page.getByTestId('error-button');
   }
 
   async goto() {
@@ -17,6 +18,10 @@ class LoginPage extends BasePage {
     await this.username.fill(username);
     await this.password.fill(password);
     await this.loginButton.click();
+  }
+
+  async dismissError() {
+    await this.errorButton.click();
   }
 }
 

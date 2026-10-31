@@ -62,4 +62,13 @@ test.describe('login - negative', () => {
       "Epic sadface: You can only access '/inventory.html' when you are logged in."
     );
   });
+
+  test('dismisses the error message with the X button @regression @negative', async () => {
+    await loginPage.login(users.lockedOut.username, users.lockedOut.password);
+    await expect(loginPage.errorMessage).toBeVisible();
+
+    await loginPage.dismissError();
+
+    await expect(loginPage.errorMessage).toBeHidden();
+  });
 });
