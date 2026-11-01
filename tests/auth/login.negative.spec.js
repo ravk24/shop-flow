@@ -1,7 +1,8 @@
-// These tests must start logged out. Phase 4 adds storageState for all other
-// specs; when it does, this file needs test.use({ storageState: { cookies: [], origins: [] } }).
 const { test, expect } = require('../../fixtures/pages.fixture');
 const { users } = require('../../data/users');
+
+// These tests must start logged out.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 const invalidLogins = [
   {
