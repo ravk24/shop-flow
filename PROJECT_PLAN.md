@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 5 complete, Phase 6 next
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 6 complete, Phase 7 next
 
 ---
 
@@ -284,8 +284,9 @@ AUTH-04 to AUTH-06 are implemented as one data-driven test over an array of case
 | CHK-11  | N    | Empty postal code                                                    | Error: "Error: Postal Code is required"                     |
 | CHK-12  | N    | All fields empty                                                     | First Name error shown first                                |
 | CHK-13  | N    | Direct navigation to `/checkout-step-two.html` with empty cart       | Document actual behaviour and assert it                     |
+| CHK-14  | N    | Item total shows a raw float for some carts                          | `test.fail`: known bug                                      |
 
-CHK-09 to CHK-11 are one data-driven test.
+CHK-09 to CHK-12 are one data-driven test.
 
 ### 6.5 End-to-end journey (`tests/e2e/`)
 
@@ -302,9 +303,9 @@ This is the single test to run when you want a 30-second health check of the who
 | Authentication | 3        | 6        | 9     |
 | Products       | 8        | 2        | 10    |
 | Cart           | 9        | 1        | 10    |
-| Checkout       | 8        | 5        | 13    |
+| Checkout       | 8        | 6        | 14    |
 | E2E            | 1        | 0        | 1     |
-| **Total**      | **29**   | **14**   | **43**|
+| **Total**      | **29**   | **15**   | **44**|
 
 ---
 
@@ -565,7 +566,7 @@ Pick any, in any order, once Phases 1–7 are done.
 
 ## 10. Definition of done (whole project)
 
-- [ ] All 43 scenarios in section 6 implemented and passing on Chromium, Firefox, WebKit.
+- [ ] All 44 scenarios in section 6 implemented and passing on Chromium, Firefox, WebKit.
 - [ ] `test.fail` tests report as expected failures, not passes.
 - [ ] Zero `waitForTimeout` calls in the repo.
 - [ ] Zero locator strings inside spec files.
@@ -587,7 +588,7 @@ When this project comes up, be ready to speak to:
 4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable.
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
 6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts.
-7. **One concrete bug you found.** `problem_user` sorting or images; explain how the test exposes it.
+7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.
 
 ---
 

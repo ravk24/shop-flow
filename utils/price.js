@@ -9,4 +9,24 @@ function formatPrice(amount) {
   return `$${amount.toFixed(2)}`;
 }
 
-module.exports = { parsePrice, formatPrice };
+// Works in whole cents, because adding prices as floats drifts: 9.99 + 49.99 is 59.980000000000004.
+function orderTotals(items) {
+  const cents = items.reduce((sum, item) => sum + Math.round(item.price * 100), 0);
+  const taxCents = Math.round(cents * 0.08);
+  return {
+    subtotal: cents / 100,
+    tax: taxCents / 100,
+    total: (cents + taxCents) / 100,
+  };
+}
+
+// Reads the amount from labels like "Tax: $3.20". SauceDemo shows the item total as a raw float
+// for some carts ("Item total: $59.980000000000004"), so the amount is rounded to cents.
+// The display bug itself is tracked by its own test.
+function parseLabelAmount(text) {
+  const match = /\$(\d+(?:\.\d+)?)$/.exec(text);
+  if (!match) throw new Error(`No amount in label: "${text}"`);
+  return Math.round(Number(match[1]) * 100) / 100;
+}
+
+module.exports = { parsePrice, formatPrice, orderTotals, parseLabelAmount };

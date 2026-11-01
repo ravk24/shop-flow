@@ -1,5 +1,6 @@
 const { BasePage } = require('./BasePage');
 const { HeaderComponent } = require('../components/HeaderComponent');
+const { CheckoutInfoPage } = require('./CheckoutInfoPage');
 
 class CartPage extends BasePage {
   constructor(page) {
@@ -31,6 +32,7 @@ class CartPage extends BasePage {
 
   async checkout() {
     await this.checkoutButton.click();
+    return new CheckoutInfoPage(this.page);
   }
 }
 
