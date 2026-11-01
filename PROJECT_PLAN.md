@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Planning complete, implementation not started
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 4 complete, Phase 5 next
 
 ---
 
@@ -213,7 +213,7 @@ Priority order:
 
 ### 5.6 Tagging
 
-Tests are tagged in their title: `@smoke`, `@regression`, `@negative`. npm scripts filter with `--grep`.
+Tests are tagged in their title: `@smoke`, `@regression`, `@negative`. npm scripts filter with `--grep`. Every `@smoke` test also carries `@regression`, so `test:regression` is the full suite.
 
 ---
 
