@@ -15,7 +15,7 @@ test.describe('inventory', () => {
     inventoryPage = new InventoryPage(page);
   });
 
-  test('lists all six products with name, price, image and button @smoke', async () => {
+  test('lists all six products with name, price, image and button @smoke @regression', async () => {
     await expect(inventoryPage.items).toHaveCount(PRODUCT_COUNT);
     await expect(inventoryPage.itemNames).toHaveText(Array(PRODUCT_COUNT).fill(/\S/));
     await expect(inventoryPage.itemPrices).toHaveText(Array(PRODUCT_COUNT).fill(/^\$\d+\.\d{2}$/));

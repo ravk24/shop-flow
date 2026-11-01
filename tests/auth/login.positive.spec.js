@@ -4,7 +4,7 @@ const { InventoryPage } = require('../../pages/InventoryPage');
 const { users } = require('../../data/users');
 
 test.describe('login', () => {
-  test('logs in as standard_user and lands on inventory @smoke', async ({ page }) => {
+  test('logs in as standard_user and lands on inventory @smoke @regression', async ({ page }) => {
     const loginPage = new LoginPage(page);
     const inventoryPage = new InventoryPage(page);
 
