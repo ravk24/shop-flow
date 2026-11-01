@@ -11,6 +11,10 @@ class HeaderComponent {
     this.resetLink = page.getByTestId('reset-sidebar-link');
   }
 
+  async openCart() {
+    await this.cartLink.click();
+  }
+
   async openMenu() {
     await this.menuButton.click();
   }
