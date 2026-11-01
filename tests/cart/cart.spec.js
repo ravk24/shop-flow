@@ -114,10 +114,10 @@ test.describe('cart', () => {
     await expect(cartPage.title).toHaveText('Your Cart');
     await expect(cartPage.items).toHaveCount(0);
 
-    await cartPage.checkout();
+    const checkoutInfoPage = await cartPage.checkout();
 
     // SauceDemo allows this. The test documents that behaviour rather than endorsing it.
     await expect(page).toHaveURL('/checkout-step-one.html');
-    await expect(cartPage.title).toHaveText('Checkout: Your Information');
+    await expect(checkoutInfoPage.title).toHaveText('Checkout: Your Information');
   });
 });
