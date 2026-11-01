@@ -35,6 +35,8 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | `npm run report`       | Open the last HTML report                      |
 | `npm run codegen`      | Record locators against SauceDemo              |
 
+For the quickest full health check, run `npx playwright test tests/e2e`. It's one test that goes from login through to a completed order.
+
 Failures attach a screenshot and video to the HTML report. To capture a trace for a local failure, run `npx playwright test --trace on` and open it with `npx playwright show-trace <path-to-trace.zip>`.
 
 ## Authentication state
@@ -47,10 +49,15 @@ A `setup` project (`tests/auth.setup.js`) logs in once per run and saves the ses
 
 ## Known app bugs
 
-SauceDemo's `problem_user` has broken sorting and broken product images on purpose. Two tests assert the correct behaviour and are marked with `test.fail()`, so the bugs stay tracked.
+Three tests assert the correct behaviour and are marked with `test.fail()`, so these bugs stay tracked:
 
-- These two tests show `✘` in the list output but count as passed, and the run still exits 0.
-- If either bug is ever fixed, the test reports `Expected to fail, but passed.` and the run goes red, which is the cue to remove `test.fail()`.
+- `problem_user` has broken sorting and broken product images, on purpose.
+- The checkout overview shows the item total as a raw float for 18 of the 63 possible carts, for example `Item total: $59.980000000000004`. This one affects the normal `standard_user`. It isn't known whether SauceDemo intends it.
+
+How they behave in a run:
+
+- These three tests show `✘` in the list output but count as passed, and the run still exits 0.
+- If any of the bugs is ever fixed, the test reports `Expected to fail, but passed.` and the run goes red, which is the cue to remove `test.fail()`.
 
 ## Project layout
 
