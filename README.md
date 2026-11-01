@@ -37,11 +37,21 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 
 Failures attach a screenshot and video to the HTML report. To capture a trace for a local failure, run `npx playwright test --trace on` and open it with `npx playwright show-trace <path-to-trace.zip>`.
 
+## Authentication state
+
+A `setup` project (`tests/auth.setup.js`) logs in once per run and saves the session to `.auth/standard.json`. That file is generated and git-ignored. Tests then load it and start already logged in, except `tests/auth/*.spec.js`, which opt out because they test logging in.
+
+- SauceDemo's login cookie expires after 10 minutes, so a saved file goes stale. Normal runs create a new one, but a run with `--no-deps` reuses whatever is there.
+- `npm run test:ui` lists `setup` as a separate project. Run it first, and again once the state has expired.
+- `npm run test:debug` also pauses on the setup test before reaching yours.
+
 ## Project layout
 
 ```
 pages/        Page objects: one class per page, locators and actions only
 components/   Shared UI such as the header (cart badge, burger menu)
+fixtures/     Extends Playwright's test so specs receive page objects ready-made
+data/         Test data such as user credentials
 tests/        Specs grouped by feature; tests own the assertions
 docs/         Design and implementation plans
 ```
