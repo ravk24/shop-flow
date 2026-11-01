@@ -12,10 +12,36 @@ class InventoryPage extends BasePage {
     this.itemPrices = page.getByTestId('inventory-item-price');
     this.itemImages = this.items.getByRole('img');
     this.addToCartButtons = page.getByTestId(/^add-to-cart-/);
+    // A card's button changes test id from add-to-cart-* to remove-* once clicked.
+    this.removeButtons = page.getByTestId(/^remove-/);
   }
 
   async goto() {
     await super.goto('/inventory.html');
+  }
+
+  itemCard(name) {
+    return this.items.filter({ hasText: name });
+  }
+
+  addToCartButtonFor(name) {
+    return this.itemCard(name).locator(this.addToCartButtons);
+  }
+
+  removeButtonFor(name) {
+    return this.itemCard(name).locator(this.removeButtons);
+  }
+
+  async addToCart(name) {
+    await this.addToCartButtonFor(name).click();
+  }
+
+  async removeFromCart(name) {
+    await this.removeButtonFor(name).click();
+  }
+
+  async openProduct(name) {
+    await this.itemNames.filter({ hasText: name }).click();
   }
 
   async sortBy(label) {
