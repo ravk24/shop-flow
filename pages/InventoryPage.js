@@ -17,6 +17,10 @@ class InventoryPage extends BasePage {
   async goto() {
     await super.goto('/inventory.html');
   }
+
+  async sortBy(label) {
+    await this.sortDropdown.selectOption({ label });
+  }
 }
 
 module.exports = { InventoryPage };
