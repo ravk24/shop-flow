@@ -1,13 +1,8 @@
-const { test, expect } = require('@playwright/test');
-const { LoginPage } = require('../../pages/LoginPage');
-const { InventoryPage } = require('../../pages/InventoryPage');
+const { test, expect } = require('../../fixtures/pages.fixture');
 const { users } = require('../../data/users');
 
 test.describe('login', () => {
-  test('logs in as standard_user and lands on inventory @smoke @regression', async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    const inventoryPage = new InventoryPage(page);
-
+  test('logs in as standard_user and lands on inventory @smoke @regression', async ({ page, loginPage, inventoryPage }) => {
     await loginPage.goto();
     await loginPage.login(users.standard.username, users.standard.password);
 
@@ -15,10 +10,7 @@ test.describe('login', () => {
     await expect(inventoryPage.title).toHaveText('Products');
   });
 
-  test('logs out from the burger menu and returns to the login page @regression', async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    const inventoryPage = new InventoryPage(page);
-
+  test('logs out from the burger menu and returns to the login page @regression', async ({ page, loginPage, inventoryPage }) => {
     await loginPage.goto();
     await loginPage.login(users.standard.username, users.standard.password);
     await expect(inventoryPage.title).toHaveText('Products');
@@ -29,10 +21,7 @@ test.describe('login', () => {
     await expect(loginPage.loginButton).toBeVisible();
   });
 
-  test('logs in as performance_glitch_user without explicit waits @regression', async ({ page }) => {
-    const loginPage = new LoginPage(page);
-    const inventoryPage = new InventoryPage(page);
-
+  test('logs in as performance_glitch_user without explicit waits @regression', async ({ page, loginPage, inventoryPage }) => {
     await loginPage.goto();
     await loginPage.login(users.performanceGlitch.username, users.performanceGlitch.password);
 

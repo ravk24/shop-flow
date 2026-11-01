@@ -1,8 +1,6 @@
 // These tests must start logged out. Phase 4 adds storageState for all other
 // specs; when it does, this file needs test.use({ storageState: { cookies: [], origins: [] } }).
-const { test, expect } = require('@playwright/test');
-const { LoginPage } = require('../../pages/LoginPage');
-const { InventoryPage } = require('../../pages/InventoryPage');
+const { test, expect } = require('../../fixtures/pages.fixture');
 const { users } = require('../../data/users');
 
 const invalidLogins = [
@@ -27,16 +25,11 @@ const invalidLogins = [
 ];
 
 test.describe('login - negative', () => {
-  let loginPage;
-  let inventoryPage;
-
-  test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
-    inventoryPage = new InventoryPage(page);
+  test.beforeEach(async ({ loginPage }) => {
     await loginPage.goto();
   });
 
-  test('shows locked out error for locked_out_user @regression @negative', async ({ page }) => {
+  test('shows locked out error for locked_out_user @regression @negative', async ({ page, loginPage }) => {
     await loginPage.login(users.lockedOut.username, users.lockedOut.password);
 
     await expect(loginPage.errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
@@ -44,7 +37,7 @@ test.describe('login - negative', () => {
   });
 
   for (const c of invalidLogins) {
-    test(`shows "${c.error}" for ${c.name} @regression @negative`, async ({ page }) => {
+    test(`shows "${c.error}" for ${c.name} @regression @negative`, async ({ page, loginPage }) => {
       await loginPage.login(c.username, c.password);
 
       await expect(loginPage.errorMessage).toHaveText(c.error);
@@ -52,7 +45,7 @@ test.describe('login - negative', () => {
     });
   }
 
-  test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({ page }) => {
+  test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({ page, loginPage, inventoryPage }) => {
     await inventoryPage.goto();
 
     await expect(page).toHaveURL('/');
@@ -61,7 +54,7 @@ test.describe('login - negative', () => {
     );
   });
 
-  test('dismisses the error message with the X button @regression @negative', async () => {
+  test('dismisses the error message with the X button @regression @negative', async ({ loginPage }) => {
     await loginPage.login(users.lockedOut.username, users.lockedOut.password);
     await expect(loginPage.errorMessage).toBeVisible();
 
