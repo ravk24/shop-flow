@@ -1,12 +1,10 @@
 const { test, expect } = require('../../fixtures/pages.fixture');
-const { users } = require('../../data/users');
 
 const PRODUCT_COUNT = 6; // Phase 5 replaces this with data/products.js
 
 test.describe('inventory', () => {
-  test.beforeEach(async ({ loginPage }) => {
-    await loginPage.goto();
-    await loginPage.login(users.standard.username, users.standard.password);
+  test.beforeEach(async ({ inventoryPage }) => {
+    await inventoryPage.goto();
   });
 
   test('lists all six products with name, price, image and button @smoke @regression', async ({ inventoryPage }) => {
@@ -17,7 +15,7 @@ test.describe('inventory', () => {
     await expect(inventoryPage.addToCartButtons).toHaveText(Array(PRODUCT_COUNT).fill('Add to cart'));
   });
 
-  test('shows an empty cart in the header after login @regression', async ({ inventoryPage }) => {
+  test('shows an empty cart in the header @regression', async ({ inventoryPage }) => {
     await expect(inventoryPage.header.cartLink).toBeVisible();
     await expect(inventoryPage.header.cartBadge).toBeHidden();
     await inventoryPage.header.openMenu();
