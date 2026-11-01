@@ -6,11 +6,14 @@ const { parsePrice, formatPrice } = require('../../utils/price');
 const byName = (a, b) => a.localeCompare(b);
 const byPrice = (a, b) => parsePrice(a) - parsePrice(b);
 
+// Named because the problem_user test reuses it. A lookup there could fail silently under test.fail.
+const priceLowToHigh = { title: 'sorts prices from low to high', option: 'Price (low to high)', column: 'itemPrices', compare: byPrice };
+
 const sortCases = [
   // A-Z is the default order, so start elsewhere or a broken A-Z would still pass.
   { title: 'sorts names from A to Z', option: 'Name (A to Z)', startFrom: 'Name (Z to A)', column: 'itemNames', compare: byName },
   { title: 'sorts names from Z to A', option: 'Name (Z to A)', column: 'itemNames', compare: (a, b) => byName(b, a) },
-  { title: 'sorts prices from low to high', option: 'Price (low to high)', column: 'itemPrices', compare: byPrice },
+  priceLowToHigh,
   { title: 'sorts prices from high to low', option: 'Price (high to low)', column: 'itemPrices', compare: (a, b) => byPrice(b, a) },
 ];
 
@@ -67,7 +70,7 @@ test.describe('inventory - problem_user', () => {
     // Known bug: sorting does nothing for this user and the dropdown snaps back to A-Z.
     test.fail();
 
-    await expectSortToWork(inventoryPage, sortCases.find((c) => c.option === 'Price (low to high)'));
+    await expectSortToWork(inventoryPage, priceLowToHigh);
   });
 
   test('shows a different image for each product for problem_user @regression @negative', async ({ inventoryPage }) => {

@@ -53,6 +53,8 @@ test.describe('cart', () => {
     await inventoryPage.addToCart(backpack.name);
     await inventoryPage.addToCart(onesie.name);
     await inventoryPage.header.openCart();
+    // Inventory cards have remove buttons too and can still be in the DOM, so wait for the cart first.
+    await expect(cartPage.title).toHaveText('Your Cart');
 
     await cartPage.removeItem(backpack.name);
 
@@ -64,6 +66,7 @@ test.describe('cart', () => {
     await inventoryPage.addToCart(backpack.name);
     await inventoryPage.addToCart(onesie.name);
     await inventoryPage.header.openCart();
+    await expect(cartPage.title).toHaveText('Your Cart');
 
     await cartPage.removeItem(backpack.name);
     await cartPage.removeItem(onesie.name);
