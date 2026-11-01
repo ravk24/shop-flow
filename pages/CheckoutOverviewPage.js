@@ -1,5 +1,6 @@
 const { BasePage } = require('./BasePage');
 const { CheckoutCompletePage } = require('./CheckoutCompletePage');
+const { parseLabelAmount } = require('../utils/price');
 
 class CheckoutOverviewPage extends BasePage {
   constructor(page) {
@@ -20,6 +21,18 @@ class CheckoutOverviewPage extends BasePage {
 
   async goto() {
     await super.goto('/checkout-step-two.html');
+  }
+
+  async subtotal() {
+    return parseLabelAmount(await this.subtotalLabel.textContent());
+  }
+
+  async tax() {
+    return parseLabelAmount(await this.taxLabel.textContent());
+  }
+
+  async total() {
+    return parseLabelAmount(await this.totalLabel.textContent());
   }
 
   async finish() {

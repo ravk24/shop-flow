@@ -1,9 +1,12 @@
 const { test, expect } = require('../../fixtures/pages.fixture');
 const { products } = require('../../data/products');
-const { formatPrice } = require('../../utils/price');
+const { formatPrice, orderTotals } = require('../../utils/price');
 const { startCheckout, reachOverview } = require('./checkout.helpers');
 
-const { backpack, fleeceJacket, onesie } = products;
+const { backpack, bikeLight, fleeceJacket, onesie } = products;
+
+const order = [backpack, bikeLight, onesie];
+const expected = orderTotals(order);
 
 test.describe('checkout', () => {
   test('completes checkout with one item @smoke @regression', async ({ page, inventoryPage, cartPage }) => {
@@ -26,6 +29,24 @@ test.describe('checkout', () => {
     await expect(overview.itemNames).toHaveText(added.map((p) => p.name));
     await expect(overview.itemPrices).toHaveText(added.map((p) => formatPrice(p.price)));
     await expect(overview.itemQuantities).toHaveText(['1', '1', '1']);
+  });
+
+  test('shows the item total as the sum of item prices @regression', async ({ inventoryPage, cartPage }) => {
+    const overview = await reachOverview({ inventoryPage, cartPage }, order);
+
+    expect(await overview.subtotal()).toBe(expected.subtotal);
+  });
+
+  test('charges tax at 8 percent of the item total @regression', async ({ inventoryPage, cartPage }) => {
+    const overview = await reachOverview({ inventoryPage, cartPage }, order);
+
+    expect(await overview.tax()).toBe(expected.tax);
+  });
+
+  test('shows the total as item total plus tax @regression', async ({ inventoryPage, cartPage }) => {
+    const overview = await reachOverview({ inventoryPage, cartPage }, order);
+
+    expect(await overview.total()).toBe(expected.total);
   });
 
   test('returns to the cart with items intact when cancelling step one @regression', async ({ page, inventoryPage, cartPage }) => {
