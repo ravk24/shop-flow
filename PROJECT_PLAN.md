@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 4 complete, Phase 5 next
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 5 complete, Phase 6 next
 
 ---
 
@@ -137,7 +137,7 @@ shopflow/
 3. Every page object extends `BasePage`, which holds `page`, `goto(path)`, and shared helpers.
 4. Locators are defined once in the constructor as `this.x = page.getByTestId(...)`. No locator strings inside methods.
 5. Shared UI that appears on several pages (header, cart badge, menu) lives in `components/`, not duplicated in each page.
-6. Multi-step actions that span pages return the next page object, for example `checkoutInfoPage.continue()` returns a `CheckoutOverviewPage`.
+6. Multi-step actions that span pages return the next page object, for example `checkoutInfoPage.continue()` returns a `CheckoutOverviewPage`. Pages that link back to each other (inventory, detail, cart) return nothing, because returning the next page would create circular requires; tests get them from fixtures.
 
 Example skeleton:
 
@@ -263,7 +263,7 @@ AUTH-04 to AUTH-06 are implemented as one data-driven test over an array of case
 | CART-05 | P    | Remove item from cart page                                           | Row disappears, badge updates                               |
 | CART-06 | P    | Remove all items                                                     | Badge locator hidden                                        |
 | CART-07 | P    | "Continue Shopping" returns to inventory                             | URL `/inventory.html`                                       |
-| CART-08 | P    | Cart persists after page reload                                      | Items still present (cookie / localStorage)                 |
+| CART-08 | P    | Cart persists after page reload                                      | Items still present (localStorage)                          |
 | CART-09 | P    | Cart persists across navigation to product detail and back           | Badge unchanged                                             |
 | CART-10 | N    | Checkout with empty cart                                             | Document actual behaviour (SauceDemo allows it); assert it  |
 
@@ -485,7 +485,7 @@ Tasks:
 4. Create `pages/CartPage.js`; implement CART-01 to CART-10.
 5. Add a `problem_user` describe block with `test.fail()` for PROD-09 and PROD-10, documenting the known bugs in comments.
 
-Done when: all product and cart tests pass on Chromium, and the two `test.fail` tests are reported as "expected failure", not as passes.
+Done when: all product and cart tests pass on Chromium, and the two `test.fail` tests are reported as "expected failure", not as passes (checked in JSON output; the terminal shows ✘ and counts them as passed).
 
 Concepts to explain: `locator.all()` vs `allTextContents()`, `nth()`, `filter({ hasText })`, `test.fail` vs `test.skip` vs `test.fixme`, asserting on sorted arrays.
 
@@ -498,7 +498,7 @@ Tasks:
 2. Create `data/checkout.data.js` with `validCustomer` and `invalidCustomers`.
 3. Implement positive tests CHK-01 to CHK-08, computing expected totals from `data/products.js` and `utils/price.js`.
 4. Implement data-driven CHK-09 to CHK-12.
-5. Implement CHK-13 and CART-10: run them once manually, record what SauceDemo actually does, and assert that behaviour.
+5. Implement CHK-13: run it once manually, record what SauceDemo actually does, and assert that behaviour.
 6. Write `tests/e2e/purchase-journey.spec.js` using `test.step` for each stage.
 
 Done when: `npm run test:smoke` runs AUTH-01, PROD-01, CART-01, CHK-01, E2E-01 and passes in under a minute.
