@@ -21,6 +21,11 @@ class InventoryPage extends BasePage {
   async sortBy(label) {
     await this.sortDropdown.selectOption({ label });
   }
+
+  // Doesn't wait for the images, so assert the cards have rendered before calling it.
+  async imageSources() {
+    return this.itemImages.evaluateAll((images) => images.map((image) => image.getAttribute('src')));
+  }
 }
 
 module.exports = { InventoryPage };

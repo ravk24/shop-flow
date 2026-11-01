@@ -1,5 +1,6 @@
 const { test, expect } = require('../../fixtures/pages.fixture');
 const { allProducts } = require('../../data/products');
+const { users } = require('../../data/users');
 const { parsePrice, formatPrice } = require('../../utils/price');
 
 const byName = (a, b) => a.localeCompare(b);
@@ -48,4 +49,31 @@ test.describe('inventory', () => {
       await expectSortToWork(inventoryPage, sortCase);
     });
   }
+});
+
+test.describe('inventory - problem_user', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  // Preconditions live here because a failure in beforeEach stays red.
+  // Inside a test.fail body, a broken login would look the same as the known bug.
+  test.beforeEach(async ({ loginPage, inventoryPage }) => {
+    await loginPage.goto();
+    await loginPage.login(users.problem.username, users.problem.password);
+    await expect(inventoryPage.title).toHaveText('Products');
+    await expect(inventoryPage.items).toHaveCount(allProducts.length);
+  });
+
+  test('sorts prices from low to high for problem_user @regression @negative', async ({ inventoryPage }) => {
+    // Known bug: sorting does nothing for this user and the dropdown snaps back to A-Z.
+    test.fail();
+
+    await expectSortToWork(inventoryPage, sortCases.find((c) => c.option === 'Price (low to high)'));
+  });
+
+  test('shows a different image for each product for problem_user @regression @negative', async ({ inventoryPage }) => {
+    // Known bug: every product image has the same src, a broken sl-404 file.
+    test.fail();
+
+    expect(new Set(await inventoryPage.imageSources()).size).toBe(allProducts.length);
+  });
 });
