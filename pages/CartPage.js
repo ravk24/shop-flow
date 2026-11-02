@@ -18,10 +18,6 @@ class CartPage extends BasePage {
     this.checkoutButton = page.getByTestId('checkout');
   }
 
-  async goto() {
-    await super.goto('/cart.html');
-  }
-
   async removeItem(name) {
     await this.items.filter({ hasText: name }).locator(this.removeButtons).click();
   }

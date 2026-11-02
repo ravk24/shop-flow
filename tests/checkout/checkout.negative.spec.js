@@ -12,7 +12,7 @@ const correctSubtotal = `Item total: ${formatPrice(orderTotals(floatCart).subtot
 
 test.describe('checkout - invalid input', () => {
   for (const c of invalidCustomers) {
-    test(`shows "${c.error}" for ${c.name} @regression @negative`, async ({ page, inventoryPage, cartPage }) => {
+    test(`rejects ${c.name} at checkout @regression @negative`, async ({ page, inventoryPage, cartPage }) => {
       const checkoutInfoPage = await startCheckout({ inventoryPage, cartPage }, [backpack]);
 
       await checkoutInfoPage.fillCustomer(c.customer);
@@ -46,6 +46,7 @@ test.describe('checkout - known bugs', () => {
 
   test('shows the item total rounded to cents @regression @negative', async ({ checkoutOverviewPage }) => {
     // Known bug: 18 of the 63 possible carts show a raw float, here $59.980000000000004.
+    // This spends the full 5 s expect timeout on every run, waiting for text that never appears. That's expected.
     test.fail();
 
     await expect(checkoutOverviewPage.subtotalLabel).toHaveText(correctSubtotal);

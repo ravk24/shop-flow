@@ -77,6 +77,7 @@ test.describe('cart', () => {
 
   test('returns to inventory with continue shopping @regression', async ({ page, inventoryPage, cartPage }) => {
     await inventoryPage.header.openCart();
+    await expect(cartPage.title).toHaveText('Your Cart');
 
     await cartPage.continueShopping();
 
