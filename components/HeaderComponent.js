@@ -16,6 +16,8 @@ class HeaderComponent {
   }
 
   async openMenu() {
+    // The app hides the menu shortly after load. A click just before that leaves it open but not displayed.
+    await this.logoutLink.waitFor({ state: 'hidden' });
     await this.menuButton.click();
   }
 

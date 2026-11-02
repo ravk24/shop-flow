@@ -31,5 +31,15 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: '.auth/standard.json' },
       dependencies: ['setup'],
     },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
   ],
 });
