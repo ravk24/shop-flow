@@ -645,7 +645,7 @@ Pick any, in any order, once Phases 1–7 are done.
 | Mobile viewport (done)      | Add `Pixel 7` project. `HeaderComponent` turned out to need no change: the menu's markup is the same on mobile | Device emulation                 |
 | Sharding in CI (done)       | Matrix strategy with `--shard=1/3`, merge with `merge-reports`. With three projects of equal size, each shard turns out to be one browser | Blob reporter, scaling |
 | Allure or Monocart reporter (done: Allure 3) | Second reporter with history and trends; CI keeps the history in the Actions cache | Reporter plugins                         |
-| TypeScript migration (done, Phase 10) | Every file but the ESLint config and the Docker script renamed to `.ts`; typed page objects, fixtures and test data; strict `tsconfig`; `tsc` and type-aware ESLint in CI, so a missing `await` fails lint | Type safety in test code, typed fixtures |
+| TypeScript migration (done, Phase 10) | Every file but the ESLint config, the Docker script and `allurerc.mjs` renamed to `.ts`; typed page objects, fixtures and test data; strict `tsconfig`; `tsc` and type-aware ESLint in CI, so a missing `await` fails lint | Type safety in test code, typed fixtures |
 | Second target app           | Point the same framework at automationexercise.com with registration flows                         | Framework reuse, abstraction quality     |
 
 ---

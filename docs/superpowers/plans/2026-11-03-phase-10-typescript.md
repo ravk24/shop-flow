@@ -21,12 +21,12 @@
 2. **Type-check only.** No compiled output to keep in sync; `npm run typecheck` (`tsc -p .`) runs in CI's `lint` job, before ESLint.
 3. **Strict mode plus `noUnusedLocals` and `noUnusedParameters`.** `lib` includes `DOM` because `page.evaluate` callbacks run in the browser.
 4. **Type-aware ESLint (`recommendedTypeChecked`)** on `.ts` files with `projectService`. Its `no-floating-promises` turns a missing `await` into a lint error, which is the most common Playwright bug.
-5. **Two files stay JavaScript:** `eslint.config.js` and `scripts/update-linux-snapshots.js`, because Node runs them directly.
+5. **Three files stay JavaScript,** because Node or Allure loads them directly: `eslint.config.js`, `scripts/update-linux-snapshots.js` and `allurerc.mjs`.
 6. **`git mv` every renamed file,** so history follows each file.
 7. **Page objects get `readonly` locator fields and `override async goto()`.** `BasePage` takes `(readonly page: Page)`.
 8. **Fixtures typed as `base.extend<Fixtures & Options>`,** so specs see real page-object types.
 9. **Test data gets named interfaces:** `Product`, `User`, `Customer`, `InvalidCustomerCase`, `InvalidLoginCase`.
-10. **`fillField` takes a `label` argument.** Lint flagged that the refill note would have printed `[object Object]` for the locator.
+10. **`fillField` takes a `label` argument.** Lint (`restrict-template-expressions`) flagged the locator inside the refill note's template string. At runtime it would have printed a locator description such as `getByTestId('firstName')`, because Locator defines `toString`, so this is a readability change, not a bug fix.
 11. **Docs keep the history but use today's file names.** §8's phase steps now name `.ts` files, with a note that Phases 1 to 9 were written in JavaScript.
 
 ## Tasks
@@ -41,6 +41,8 @@
 
 - **The setup project's `testMatch` still said `.setup.js`.** Setup silently didn't run, and 203 tests failed against an expired saved session. Fixed in the config; it's the most convincing argument in this phase for running the whole suite after a "pure rename".
 - **A failed run wrote fresh win32 baselines** into the new snapshot folder. They were deleted and the committed PNGs moved in instead, then verified.
+- **The CI merge step still named `playwright.merge.config.js`** (found by the final review; CI run 41487746234 had four green shards and a red `merge-reports`). The local tasks never exercised the workflow's merge path. Reproduced locally with the workflow's exact command (exit 1), fixed to `.ts` (exit 0, both reports written).
+- **The label reads briefly switched to `innerText()`** with a wrong comment claiming `textContent()` doesn't wait. Both auto-wait; `innerText` returns rendered text. Reverted to `textContent() ?? ''`, so the migration changes no runtime behaviour.
 - **A Firefox A11Y-08 timeout** in one full run passed 5 of 5 on rerun: the known local Firefox stall under 8 workers, not a migration fault.
 
 ## Results
@@ -48,6 +50,13 @@
 - `npm run typecheck`, `npm run lint` and `npm run format:check` clean.
 - Full local run: 264 passed, 5 skipped (2.0 min).
 - Planted missing `await`: `@typescript-eslint/no-floating-promises` error, exit 1.
+
+## Deferred minors (from the final review)
+
+- `lib: ["DOM"]` applies to all files, so Node-side code could use `document` and pass `tsc`, then throw at runtime.
+- `noUncheckedIndexedAccess` is off; `violation.nodes[0].target` in `utils/a11y.ts` type-checks without a guard.
+- Sort labels are plain `string`s; a union of the four options would make a typo a type error.
+- `tseslint.config(...)` is deprecated in favour of ESLint's `defineConfig`.
 
 ## Concepts to explain
 

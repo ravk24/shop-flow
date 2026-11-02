@@ -125,7 +125,7 @@ To download the reports, open a run in the [Actions tab](https://github.com/ravk
 
 ## TypeScript
 
-Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Two files stay JavaScript because Node runs them directly: `eslint.config.js` and `scripts/update-linux-snapshots.js`.
+Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Three files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, `scripts/update-linux-snapshots.js` and `allurerc.mjs`.
 
 ## Project layout
 

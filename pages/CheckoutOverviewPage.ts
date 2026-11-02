@@ -35,17 +35,17 @@ export class CheckoutOverviewPage extends BasePage {
     await super.goto('/checkout-step-two.html');
   }
 
-  // innerText waits for the label, unlike textContent, and always returns a string.
+  // textContent() can return null; an empty string makes parseLabelAmount throw with the label it got.
   async subtotal(): Promise<number> {
-    return parseLabelAmount(await this.subtotalLabel.innerText());
+    return parseLabelAmount((await this.subtotalLabel.textContent()) ?? '');
   }
 
   async tax(): Promise<number> {
-    return parseLabelAmount(await this.taxLabel.innerText());
+    return parseLabelAmount((await this.taxLabel.textContent()) ?? '');
   }
 
   async total(): Promise<number> {
-    return parseLabelAmount(await this.totalLabel.innerText());
+    return parseLabelAmount((await this.totalLabel.textContent()) ?? '');
   }
 
   async finish(): Promise<CheckoutCompletePage> {
