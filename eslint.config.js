@@ -19,7 +19,7 @@ module.exports = [
     settings: { playwright: { globalAliases: { test: ['setup'] } } },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
-      'playwright/expect-expect': ['warn', { assertFunctionNames: ['expectSortToWork'] }],
+      'playwright/expect-expect': ['warn', { assertFunctionNames: ['expectSortToWork', 'expectNoViolations'] }],
       'playwright/no-skipped-test': ['warn', { allowConditional: true }],
     },
   },

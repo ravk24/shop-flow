@@ -4,7 +4,9 @@ const { InventoryPage } = require('../pages/InventoryPage');
 const { ProductDetailPage } = require('../pages/ProductDetailPage');
 const { CartPage } = require('../pages/CartPage');
 const { CheckoutOverviewPage } = require('../pages/CheckoutOverviewPage');
+const { default: AxeBuilder } = require('@axe-core/playwright');
 const { isKnownNoise } = require('../utils/console');
+const { WCAG_TAGS } = require('../utils/a11y');
 
 exports.test = base.test.extend({
   failOnConsoleErrors: [true, { option: true }],
@@ -29,6 +31,9 @@ exports.test = base.test.extend({
     },
     { auto: true },
   ],
+
+  // A fresh scanner per call, so a test can scan more than one state.
+  makeAxeBuilder: async ({ page }, use) => use(() => new AxeBuilder({ page }).withTags(WCAG_TAGS)),
 
   loginPage: async ({ page }, use) => use(new LoginPage(page)),
   inventoryPage: async ({ page }, use) => use(new InventoryPage(page)),
