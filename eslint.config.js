@@ -15,7 +15,7 @@ module.exports = [
   },
   {
     ...playwright.configs['flat/recommended'],
-    files: ['tests/**/*.js'],
+    files: ['tests/**/*.js', 'pages/**/*.js', 'components/**/*.js', 'fixtures/**/*.js'],
     settings: { playwright: { globalAliases: { test: ['setup'] } } },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
