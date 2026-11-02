@@ -11,10 +11,7 @@ module.exports = defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
 
-  reporter: [
-    ['list'],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-  ],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
 
   use: {
     baseURL: process.env.BASE_URL || 'https://www.saucedemo.com',
@@ -29,6 +26,16 @@ module.exports = defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], storageState: '.auth/standard.json' },
       dependencies: ['setup'],
     },
   ],

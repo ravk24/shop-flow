@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 6 complete, Phase 7 next
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete, Phase 8 stretch goals next
 
 ---
 
@@ -388,8 +388,9 @@ PASSWORD=secret_sauce
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
     "codegen": "playwright codegen https://www.saucedemo.com",
-    "lint": "eslint .",
-    "format": "prettier --write ."
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   }
 }
 ```
@@ -513,7 +514,7 @@ Concepts to explain: `test.step` and how it appears in the HTML report, floating
 Tasks:
 1. Enable `firefox` and `webkit` projects. Fix any browser-specific failures (expect at least one).
 2. Confirm `screenshot`, `video`, `trace` settings behave as intended by forcing a failure.
-3. Finalise `.github/workflows/playwright.yml`: checkout, setup-node, `npm ci`, `npx playwright install --with-deps`, `npx playwright test`, `actions/upload-artifact` for `playwright-report/` with `if: always()`.
+3. Finalise `.github/workflows/playwright.yml`: checkout, setup-node, `npm ci`, `npx playwright install --with-deps`, `npx playwright test`, `actions/upload-artifact` for `playwright-report/` with `if: ${{ !cancelled() }}`, so the report is uploaded after failures but not after a cancelled run.
 4. Add ESLint (`eslint-plugin-playwright`) and Prettier. Fix lint findings. Add a `lint` job to CI.
 5. Set `retries: 2` in CI and deliberately introduce one flaky test to watch retry behaviour, then remove it.
 6. Initialise git if not already done, push to GitHub, add the workflow badge to `README.md`.
@@ -585,7 +586,7 @@ When this project comes up, be ready to speak to:
 1. **Why Playwright over Selenium or Cypress.** Auto-waiting, multi-browser including WebKit, built-in test runner, trace viewer, first-class fixtures.
 2. **How the framework is structured and why.** POM for maintainability, fixtures for dependency injection, data files for separation of data from logic, components for shared UI.
 3. **How you handle authentication.** `storageState` via a setup project; auth tests opt out.
-4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable.
+4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once.
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
 6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts.
 7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.

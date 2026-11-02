@@ -1,6 +1,8 @@
 # ShopFlow
 
-End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It is being built phase by phase to cover authentication, product listing, cart and checkout flows using the Page Object Model.
+[![Playwright Tests](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml)
+
+End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox and WebKit.
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
@@ -15,7 +17,7 @@ The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN
 git clone <this-repo> shop-flow
 cd shop-flow
 npm install
-npx playwright install chromium
+npx playwright install
 cp .env.example .env        # PowerShell: Copy-Item .env.example .env
 ```
 
@@ -25,7 +27,9 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 
 | Command                | What it does                                   |
 |------------------------|------------------------------------------------|
-| `npm test`             | Run the whole suite headless on Chromium       |
+| `npm test`             | Run the whole suite headless on all three browsers |
+| `npm run test:all-browsers` | Same, naming the three browsers explicitly |
+| `npm run test:chromium` | Run on Chromium only, the fast local loop     |
 | `npm run test:smoke`   | Run only tests tagged `@smoke`                 |
 | `npm run test:regression` | Run tests tagged `@regression` (includes the smoke tests) |
 | `npm run test:negative` | Run only tests tagged `@negative`             |
@@ -34,6 +38,9 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | `npm run test:debug`   | Step through with the Playwright Inspector     |
 | `npm run report`       | Open the last HTML report                      |
 | `npm run codegen`      | Record locators against SauceDemo              |
+| `npm run lint`         | Run ESLint; warnings fail too                  |
+| `npm run format`       | Format the code with Prettier                  |
+| `npm run format:check` | Check formatting without changing files        |
 
 For the quickest full health check, run `npx playwright test tests/e2e`. It's one test that goes from login through to a completed order.
 
@@ -58,6 +65,22 @@ How they behave in a run:
 
 - These three tests show `✘` in the list output but count as passed, and the run still exits 0.
 - If any of the bugs is ever fixed, the test reports `Expected to fail, but passed.` and the run goes red, which is the cue to remove `test.fail()`.
+
+## Browser notes
+
+Two timing failures only appeared once Firefox and WebKit were enabled. Both are handled in the page objects, not with sleeps or retries:
+
+- **Burger menu:** the app hides the menu about half a second after load, and a click just before that leaves it open but not displayed. `HeaderComponent.openMenu()` waits for the logout link to go hidden before clicking.
+- **Dropped text on WebKit:** under load, `fill()` can succeed with no text arriving in the field. `CheckoutInfoPage.fillField()` reads the value back and refills once. A value that's still wrong fails the test's own assertions. The trade-off is that a real Safari problem of this exact kind wouldn't be reported. It isn't established whether the fault is in WebKit or Playwright.
+
+## CI
+
+GitHub Actions runs two jobs on every push and on pull requests to `main`:
+
+- `test` installs all three browsers with their system dependencies and runs the whole suite, with 2 workers and up to 2 retries.
+- `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
+
+To download the HTML report, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` artifact. It's uploaded after failures too, and kept for 30 days.
 
 ## Project layout
 

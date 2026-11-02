@@ -15,9 +15,17 @@ class CheckoutInfoPage extends BasePage {
   }
 
   async fillCustomer({ firstName, lastName, postalCode }) {
-    await this.firstName.fill(firstName);
-    await this.lastName.fill(lastName);
-    await this.postalCode.fill(postalCode);
+    await this.fillField(this.firstName, firstName);
+    await this.fillField(this.lastName, lastName);
+    await this.fillField(this.postalCode, postalCode);
+  }
+
+  // On WebKit under load, fill() can succeed with no text arriving. A value still wrong after the refill fails the test's own assertions.
+  async fillField(field, value) {
+    await field.fill(value);
+    if ((await field.inputValue()) !== value) {
+      await field.fill(value);
+    }
   }
 
   async continue() {
