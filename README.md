@@ -8,7 +8,7 @@ The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN
 
 ## Prerequisites
 
-- Node.js 20.19 or newer, 22.13 or newer, or 24 (ESLint 10 needs these; developed on Node 24)
+- Node.js 20.19+ on the 20 line, 22.13+ on the 22 line, or 24+ (ESLint 10 needs one of these; developed on Node 24)
 - Git
 
 ## Install
@@ -115,7 +115,7 @@ Two timing failures only appeared once Firefox and WebKit were enabled. Both are
 GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 - `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
-- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends.
+- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
 - `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
@@ -135,6 +135,15 @@ reporters/    The Allure reporter, fixed for merged shards and clearing old resu
 scripts/      Regenerates the Linux screenshot baselines in Docker
 docs/         Design and implementation plans
 ```
+
+## Dependencies
+
+`package.json` overrides three packages that `allure` and `eslint` pull in, so `npm audit` reports none of their published advisories:
+
+- `glob` 14.0.3 and `minimatch` 11.0.4 replace versions with denial-of-service and traversal advisories. These are real fixes.
+- `dompurify` 3.4.17 replaces 3.4.16 in the installed tree, but Allure's report UI ships its own pre-built copy of DOMPurify 3.4.16, which the override can't reach. The risk is low, because that page only renders this project's own results.
+
+Remove each override once `allure` or `eslint` depends on a patched version.
 
 ## License
 

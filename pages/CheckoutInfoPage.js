@@ -26,7 +26,13 @@ class CheckoutInfoPage extends BasePage {
   async fillField(field, value) {
     await field.fill(value);
     if ((await field.inputValue()) !== value) {
-      test.info().annotations.push({ type: 'refill', description: `${field} had "${await field.inputValue()}" after fill` });
+      const description = `${field} had "${await field.inputValue()}" after fill`;
+      // test.info() throws outside a running test; a refill must never fail for want of a place to record it.
+      try {
+        test.info().annotations.push({ type: 'refill', description });
+      } catch {
+        // Not inside a test: nothing to annotate.
+      }
       await field.fill(value);
     }
   }

@@ -28,7 +28,7 @@ test.describe('inventory', () => {
   test.beforeEach(async ({ page, inventoryPage }) => {
     await inventoryPage.goto();
     // Expired saved state redirects to login. Without this, that would surface as "expected 6 items, received 0".
-    await expect(page, 'saved login state has expired; rerun without --no-deps').toHaveURL('/inventory.html');
+    await expect(page, 'saved login state is missing or expired (see README, Authentication state)').toHaveURL('/inventory.html');
   });
 
   test('lists all six products with name, price, image and button @smoke @regression', async ({ inventoryPage }) => {
@@ -47,7 +47,7 @@ test.describe('inventory', () => {
   test('opens the burger menu with a logout link @regression', async ({ inventoryPage }) => {
     await inventoryPage.header.openMenu();
 
-    // toBeVisible would also pass with the menu closed: the link counts as visible while it sits off screen.
+    // toBeVisible could pass before the app first hides the menu: the link counts as visible while it sits off screen.
     await expect(inventoryPage.header.logoutLink).toBeInViewport();
   });
 

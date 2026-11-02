@@ -62,7 +62,7 @@ Credentials are public and are not secrets, but the project still reads them fro
 | Concern         | Choice                                   | Notes                                                  |
 |-----------------|------------------------------------------|--------------------------------------------------------|
 | Language        | JavaScript (CommonJS)                    | Matches the resume. TypeScript is a later migration.  |
-| Runtime         | Node.js 24 (installed: v24.18.0)         | Any LTS ≥ 20 works (Playwright 1.64 engines)           |
+| Runtime         | Node.js 24 (installed: v24.18.0)         | 20.19+, 22.13+ or 24+ (ESLint 10's engines)           |
 | Test runner     | `@playwright/test`                       | Built-in fixtures, parallelism, retries, reporters    |
 | Browsers        | Chromium, Firefox, WebKit, Pixel 7 (Chromium) | `npm run test:chromium` is the fast local loop   |
 | Design pattern  | Page Object Model + custom fixtures      | See section 5                                          |
@@ -366,7 +366,7 @@ The `mobile-chrome` project (Pixel 7) runs the whole suite. These two tests prov
 
 ### Coverage summary
 
-Per browser, counted from `npx playwright test --list`.
+Per browser, counted from `npx playwright test --list --reporter=line` (the Allure reporter would replace your last results with "skipped" ones).
 
 | Area           | Positive | Negative | Total |
 |----------------|----------|----------|-------|
