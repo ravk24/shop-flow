@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete, Phase 8 stretch goals next
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete; Phase 8: console errors and CI sharding done
 
 ---
 
@@ -111,9 +111,12 @@ shopflow/
 │   ├── checkout/
 │   │   ├── checkout.positive.spec.js
 │   │   └── checkout.negative.spec.js
+│   ├── console/
+│   │   └── console-errors.spec.js
 │   └── e2e/
 │       └── purchase-journey.spec.js # full smoke journey
 ├── utils/
+│   ├── console.js                  # known console noise filter
 │   ├── price.js                    # "$29.99" -> 29.99, tax calc
 │   └── logger.js
 ├── .env.example
@@ -296,16 +299,30 @@ CHK-09 to CHK-12 are one data-driven test.
 
 This is the single test to run when you want a 30-second health check of the whole framework.
 
+### 6.6 Console errors (`tests/console/`)
+
+| ID     | Type | Scenario                                                  | Expected result                                                  |
+|--------|------|-----------------------------------------------------------|------------------------------------------------------------------|
+| CON-01 | N    | Page logs a `console.error`                               | The message is collected                                         |
+| CON-02 | N    | Page throws an uncaught exception                         | The message is collected                                         |
+| CON-03 | N    | Page logs an error, with the fixture's check on           | `test.fail`: the fixture's teardown fails the test               |
+| CON-04 | N    | Page requests a resource that doesn't exist               | Collected. Skipped on Firefox, which doesn't log failed resources |
+| CON-05 | N    | error_user adds the Bolt T-Shirt                          | Known bug: `Failed to add item to the cart.`, and the badge stays hidden |
+| CON-06 | P    | error_user adds the Backpack, with the fixture's check on | Badge shows 1 and the test passes                                |
+
 ### Coverage summary
+
+Per browser, counted from `npx playwright test --list`.
 
 | Area           | Positive | Negative | Total |
 |----------------|----------|----------|-------|
 | Authentication | 3        | 6        | 9     |
-| Products       | 8        | 2        | 10    |
+| Products       | 9        | 2        | 11    |
 | Cart           | 9        | 1        | 10    |
 | Checkout       | 8        | 6        | 14    |
+| Console errors | 1        | 5        | 6     |
 | E2E            | 1        | 0        | 1     |
-| **Total**      | **29**   | **15**   | **44**|
+| **Total**      | **31**   | **20**   | **51**|
 
 ---
 
@@ -322,6 +339,7 @@ module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  failOnFlakyTests: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
   timeout: 30_000,
@@ -369,6 +387,7 @@ STANDARD_USER=standard_user
 LOCKED_OUT_USER=locked_out_user
 PROBLEM_USER=problem_user
 PERFORMANCE_GLITCH_USER=performance_glitch_user
+ERROR_USER=error_user
 PASSWORD=secret_sauce
 ```
 
@@ -530,10 +549,10 @@ Pick any, in any order, once Phases 1–7 are done.
 | Goal                        | What you build                                                                                     | Concept learned                          |
 |-----------------------------|----------------------------------------------------------------------------------------------------|------------------------------------------|
 | Visual regression           | `toHaveScreenshot()` on inventory and cart pages; run with `visual_user` and watch it fail         | Snapshot management, `--update-snapshots`|
-| Console error detection     | Fixture that collects `page.on('console')` errors and fails the test if any; run with `error_user` | Event listeners, custom fixtures         |
+| Console error detection (done) | Automatic fixture that collects `page.on('console')` errors and `page.on('pageerror')` exceptions and fails the test if any; run with `error_user`. `pageerror` is needed because most of `error_user`'s failures are uncaught exceptions | Event listeners, custom fixtures |
 | Accessibility checks        | `@axe-core/playwright` scan on each page                                                           | Automated a11y                           |
 | Mobile viewport             | Add `Pixel 7` project; adjust `HeaderComponent` for mobile menu                                    | Device emulation                         |
-| Sharding in CI              | Matrix strategy with `--shard=1/3`, merge with `merge-reports`                                     | Blob reporter, scaling                   |
+| Sharding in CI (done)       | Matrix strategy with `--shard=1/3`, merge with `merge-reports`. With three projects of equal size, each shard turns out to be one browser | Blob reporter, scaling |
 | Allure or Monocart reporter | Second reporter with history and trends                                                            | Reporter plugins                         |
 | TypeScript migration        | Rename to `.ts`, add types to page objects                                                         | Type safety in test code                 |
 | Second target app           | Point the same framework at automationexercise.com with registration flows                         | Framework reuse, abstraction quality     |
@@ -586,7 +605,7 @@ When this project comes up, be ready to speak to:
 1. **Why Playwright over Selenium or Cypress.** Auto-waiting, multi-browser including WebKit, built-in test runner, trace viewer, first-class fixtures.
 2. **How the framework is structured and why.** POM for maintainability, fixtures for dependency injection, data files for separation of data from logic, components for shared UI.
 3. **How you handle authentication.** `storageState` via a setup project; auth tests opt out.
-4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once.
+4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once. CI enforces the policy: a test that only passes on retry fails the run, so a flake can't hide behind a green badge. The trade-off is that a brief outage on the site under test can also turn it red.
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
 6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts.
 7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.

@@ -20,6 +20,7 @@ module.exports = [
     rules: {
       ...playwright.configs['flat/recommended'].rules,
       'playwright/expect-expect': ['warn', { assertFunctionNames: ['expectSortToWork'] }],
+      'playwright/no-skipped-test': ['warn', { allowConditional: true }],
     },
   },
   prettier,

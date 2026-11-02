@@ -7,6 +7,7 @@ const users = {
   lockedOut: { username: process.env.LOCKED_OUT_USER || 'locked_out_user', password },
   problem: { username: process.env.PROBLEM_USER || 'problem_user', password },
   performanceGlitch: { username: process.env.PERFORMANCE_GLITCH_USER || 'performance_glitch_user', password },
+  error: { username: process.env.ERROR_USER || 'error_user', password },
 };
 
 module.exports = { users };
