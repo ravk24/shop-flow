@@ -4,10 +4,25 @@ const { InventoryPage } = require('../pages/InventoryPage');
 const { ProductDetailPage } = require('../pages/ProductDetailPage');
 const { CartPage } = require('../pages/CartPage');
 const { CheckoutOverviewPage } = require('../pages/CheckoutOverviewPage');
-const { isKnownNoise } = require('../utils/console');
+const { default: AxeBuilder } = require('@axe-core/playwright');
+const { isKnownNoise, TELEMETRY_URL } = require('../utils/console');
+const { WCAG_TAGS } = require('../utils/a11y');
 
 exports.test = base.test.extend({
   failOnConsoleErrors: [true, { option: true }],
+
+  // SauceDemo posts telemetry to a third-party service with placeholder credentials. Answering it here keeps
+  // the tests independent of that service: its 401s, and its occasional 5xx (which WebKit reports as CORS
+  // errors that name no URL), never reach the console check.
+  stubTelemetry: [
+    async ({ page }, use) => {
+      await page.route(TELEMETRY_URL, (route) =>
+        route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, body: '{}' }),
+      );
+      await use();
+    },
+    { auto: true },
+  ],
 
   // Runs for every test. Fails it at the end if the page logged an error or threw.
   // Limits: it watches this `page` only, can miss an error after a test's last action, and doesn't see alerts.
@@ -29,6 +44,9 @@ exports.test = base.test.extend({
     },
     { auto: true },
   ],
+
+  // A fresh scanner per call, so a test can scan more than one state.
+  makeAxeBuilder: async ({ page }, use) => use(() => new AxeBuilder({ page }).withTags(WCAG_TAGS)),
 
   loginPage: async ({ page }, use) => use(new LoginPage(page)),
   inventoryPage: async ({ page }, use) => use(new InventoryPage(page)),

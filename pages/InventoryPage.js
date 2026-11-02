@@ -52,6 +52,12 @@ class InventoryPage extends BasePage {
   async imageSources() {
     return this.itemImages.evaluateAll((images) => images.map((image) => image.getAttribute('src')));
   }
+
+  // Cards in one column share a left edge. Like imageSources, it reads whatever has rendered.
+  async columnCount() {
+    const lefts = await this.items.evaluateAll((cards) => cards.map((card) => Math.round(card.getBoundingClientRect().left)));
+    return new Set(lefts).size;
+  }
 }
 
 module.exports = { InventoryPage };

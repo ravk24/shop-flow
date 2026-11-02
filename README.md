@@ -2,7 +2,7 @@
 
 [![Playwright Tests](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml)
 
-End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox and WebKit.
+End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox, WebKit and an emulated Pixel 7, with visual regression, accessibility scans, console error detection and an Allure report.
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
@@ -27,9 +27,11 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 
 | Command                | What it does                                   |
 |------------------------|------------------------------------------------|
-| `npm test`             | Run the whole suite headless on all three browsers |
-| `npm run test:all-browsers` | Same, naming the three browsers explicitly |
+| `npm test`             | Run the whole suite headless on all four projects |
+| `npm run test:all-browsers` | Run on the three desktop browsers only    |
 | `npm run test:chromium` | Run on Chromium only, the fast local loop     |
+| `npm run test:mobile`  | Run on the emulated Pixel 7 only               |
+| `npm run test:visual:update-linux` | Regenerate the Linux screenshot baselines in Docker |
 | `npm run test:smoke`   | Run only tests tagged `@smoke`                 |
 | `npm run test:regression` | Run tests tagged `@regression` (includes the smoke tests) |
 | `npm run test:negative` | Run only tests tagged `@negative`             |
@@ -37,6 +39,7 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | `npm run test:ui`      | Open Playwright UI mode                        |
 | `npm run test:debug`   | Step through with the Playwright Inspector     |
 | `npm run report`       | Open the last HTML report                      |
+| `npm run report:allure` | Build the Allure report from the last run into `allure-report/index.html` |
 | `npm run codegen`      | Record locators against SauceDemo              |
 | `npm run lint`         | Run ESLint; warnings fail too                  |
 | `npm run format`       | Format the code with Prettier                  |
@@ -70,9 +73,34 @@ How they behave in a run:
 
 Every test fails at the end if the page logged a `console.error` or threw an uncaught exception, through an automatic fixture in `fixtures/pages.fixture.js`. Uncaught exceptions matter most here: nearly all of `error_user`'s failures arrive that way, not through the console.
 
-- **Ignored on purpose (`utils/console.js`):** SauceDemo's telemetry getting a 401 from `events.backtrace.io`, and the 404 status its server gives a direct visit to any `.html` page. If new noise appears, read it before adding it to this list.
+- **Ignored on purpose (`utils/console.js`):** the 404 status SauceDemo's server gives a direct visit to any `.html` page. If new noise appears, read it before adding it to this list.
+- **Telemetry is answered locally:** SauceDemo posts telemetry to `events.backtrace.io` with placeholder credentials. An automatic fixture answers those requests with a 200, so the tests don't depend on that service. Filtering wasn't enough: the service normally answers 401, but once on CI it answered 502, and WebKit reported that as CORS errors that don't name the URL, which no narrow filter could tell apart from a real one.
 - **To read errors in a test instead of failing on them:** use `test.use({ failOnConsoleErrors: false })` and assert on the `consoleErrors` fixture.
 - **What it doesn't catch:** `alert`s (such as `error_user`'s "Sorting is broken!"), errors after a test's last action, and pages other than the test's own `page`. Firefox doesn't log failed resources to the console, so a missing asset is only caught on Chromium and WebKit.
+
+## Visual regression
+
+`tests/visual/` compares full-page screenshots of the inventory and the cart against committed baselines in `tests/visual/visual.spec.js-snapshots/`. Rendering differs between operating systems, so each browser has a `-win32` and a `-linux` baseline. There are none for macOS, so on a Mac these tests fail with "A snapshot doesn't exist" until you generate your own.
+
+- **After an intended UI change on Windows:** run `npx playwright test --grep @visual --update-snapshots=all`, then open the changed PNGs before committing them.
+- **Linux (what CI compares against):** run `npm run test:visual:update-linux` with Docker running. It uses the same Playwright image as CI, `mcr.microsoft.com/playwright:v<installed version>-noble`, so the baselines match CI pixel for pixel. When you upgrade `@playwright/test`, bump the image tag in `.github/workflows/playwright.yml` too, then regenerate.
+- **`visual_user`:** its test compares that user's page against the real inventory baseline and is expected to fail (`test.fail`). Its prices are random on every load, so both inventory tests hide prices with `tests/visual/hide-prices.css`. They must hide them the same way: a mask applied only to the new screenshot would make the comparison fail whatever the page looked like. Logged in as `standard_user` instead, the test goes red with "Expected to fail, but passed", which shows the expected failure comes from `visual_user`'s page. It skips itself while snapshots are being written, because it would otherwise overwrite the real baseline with the broken page.
+
+## Accessibility
+
+`tests/a11y/` scans 8 page states with [axe](https://github.com/dequelabs/axe-core) against the WCAG 2.0, 2.1 and 2.2 rules at levels A and AA, and fails on any violation. SauceDemo passes today, so one test plants an image without alt text to prove the scan can fail.
+
+Axe's best-practice rules are deliberately not gated. They report three things on SauceDemo, which are recorded here rather than tested:
+
+- No page has an `h1` (`page-has-heading-one`).
+- The login page's logo sits outside any landmark (`region`).
+- The error message is an `h3` with a `role` it doesn't allow (`aria-allowed-role`).
+
+Axe can't judge colour contrast over the product images, so it reports `color-contrast` as "incomplete" there, not as passed.
+
+## Mobile
+
+The `mobile-chrome` project runs the whole suite on Chromium emulating a Pixel 7 (412 × 839, touch). The existing tests needed no change, because the burger menu has the same markup on a phone. `tests/mobile/` checks that `mobile-chrome` is a mobile device with a narrow viewport and shows products in one column, and that desktop shows two. The tests pick their layout by project name, so if the project lost its device settings, the phone test would fail rather than skip.
 
 ## Browser notes
 
@@ -85,13 +113,13 @@ Two timing failures only appeared once Firefox and WebKit were enabled. Both are
 
 GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
-- `test` runs the suite in three shards, as separate jobs, each with 2 workers and up to 2 retries. With today's test order, each shard turns out to be one browser: Chromium, Firefox, WebKit. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a browser-specific failure is visible at a glance.
-- `merge-reports` combines the three shards' blob reports into one HTML report, even if a shard failed.
+- `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
+- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch.
 - `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
-To download the HTML report, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` artifact. It's uploaded after failures too, and kept for 30 days.
+To download the reports, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
 
 ## Project layout
 
@@ -100,7 +128,9 @@ pages/        Page objects: one class per page, locators and actions only
 components/   Shared UI such as the header (cart badge, burger menu)
 fixtures/     Extends Playwright's test so specs receive page objects ready-made
 data/         Test data such as user credentials and products
-utils/        Small helpers such as price parsing and the console noise filter
+utils/        Small helpers such as price parsing, the console noise filter and axe's WCAG tags
 tests/        Specs grouped by feature; tests own the assertions
+reporters/    The Allure reporter wrapped so it works when CI merges shards
+scripts/      Regenerates the Linux screenshot baselines in Docker
 docs/         Design and implementation plans
 ```

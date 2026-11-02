@@ -4,6 +4,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
+  globalSetup: require.resolve('./global-setup.js'),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,
@@ -12,7 +13,12 @@ module.exports = defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
 
-  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    // Raw results for the Allure report (`npm run report:allure`). CI builds Allure from the merged shards instead.
+    ['allure-playwright', { resultsDir: 'allure-results' }],
+  ],
 
   use: {
     baseURL: process.env.BASE_URL || 'https://www.saucedemo.com',
@@ -43,6 +49,11 @@ module.exports = defineConfig({
         // Tracing every run in all browsers made Firefox clicks stall locally, so the others keep on-first-retry.
         trace: 'retain-on-failure-and-retries',
       },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'], storageState: '.auth/standard.json' },
       dependencies: ['setup'],
     },
   ],

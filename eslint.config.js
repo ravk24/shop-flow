@@ -4,7 +4,7 @@ const playwright = require('eslint-plugin-playwright');
 const prettier = require('eslint-config-prettier');
 
 module.exports = [
-  { ignores: ['playwright-report/', 'test-results/', 'blob-report/'] },
+  { ignores: ['playwright-report/', 'test-results/', 'blob-report/', 'allure-results/', 'allure-report/', 'allure-history/'] },
   js.configs.recommended,
   {
     files: ['**/*.js'],
@@ -19,7 +19,7 @@ module.exports = [
     settings: { playwright: { globalAliases: { test: ['setup'] } } },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
-      'playwright/expect-expect': ['warn', { assertFunctionNames: ['expectSortToWork'] }],
+      'playwright/expect-expect': ['warn', { assertFunctionNames: ['expectSortToWork', 'expectNoViolations'] }],
       'playwright/no-skipped-test': ['warn', { allowConditional: true }],
     },
   },

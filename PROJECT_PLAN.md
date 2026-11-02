@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete; Phase 8: console errors and CI sharding done
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete; Phase 8: console errors, CI sharding, visual regression, accessibility, mobile viewport and Allure done
 
 ---
 
@@ -64,10 +64,11 @@ Credentials are public and are not secrets, but the project still reads them fro
 | Language        | JavaScript (CommonJS)                    | Matches the resume. TypeScript is a later migration.  |
 | Runtime         | Node.js 24 (installed: v24.18.0)         | Any LTS ≥ 20 works (Playwright 1.64 engines)           |
 | Test runner     | `@playwright/test`                       | Built-in fixtures, parallelism, retries, reporters    |
-| Browsers        | Chromium, Firefox, WebKit                | Chromium only during development                      |
+| Browsers        | Chromium, Firefox, WebKit, Pixel 7 (Chromium) | Chromium only during development                 |
 | Design pattern  | Page Object Model + custom fixtures      | See section 5                                          |
 | Config          | `dotenv`                                 | `.env` ignored, `.env.example` committed               |
-| Reporting       | Playwright HTML reporter + `list`        | Traces, screenshots, videos on failure                 |
+| Reporting       | Playwright HTML reporter + `list`, Allure 3 | Traces, screenshots, videos on failure; Allure adds history and trends |
+| Accessibility   | `@axe-core/playwright`                   | WCAG A/AA rules, Phase 8                               |
 | CI              | GitHub Actions                           | Report uploaded as workflow artifact                   |
 | Lint/format     | ESLint + Prettier                        | Optional but recommended, Phase 7                      |
 
@@ -113,18 +114,33 @@ shopflow/
 │   │   └── checkout.negative.spec.js
 │   ├── console/
 │   │   └── console-errors.spec.js
+│   ├── visual/
+│   │   ├── visual.spec.js
+│   │   └── visual.spec.js-snapshots/ # baselines per browser and OS
+│   ├── a11y/
+│   │   └── a11y.spec.js
+│   ├── mobile/
+│   │   └── layout.spec.js
 │   └── e2e/
 │       └── purchase-journey.spec.js # full smoke journey
+├── reporters/
+│   └── merge-safe-allure.js        # Allure reporter that survives merge-reports
+├── scripts/
+│   └── update-linux-snapshots.js   # Linux baselines in Playwright's Docker image
 ├── utils/
+│   ├── a11y.js                     # WCAG tags, readable violation list
 │   ├── console.js                  # known console noise filter
 │   ├── price.js                    # "$29.99" -> 29.99, tax calc
 │   └── logger.js
 ├── .env.example
 ├── .gitignore
 ├── .prettierrc
+├── allurerc.mjs                    # Allure output, history file, single-file report
 ├── eslint.config.js
+├── global-setup.js                 # clears allure-results before each run
 ├── package.json
 ├── playwright.config.js
+├── playwright.merge.config.js      # CI: HTML and Allure from the merged shards
 ├── PROJECT_PLAN.md                 # this file
 └── README.md                       # short: how to install and run
 ```
@@ -309,6 +325,42 @@ This is the single test to run when you want a 30-second health check of the who
 | CON-04 | N    | Page requests a resource that doesn't exist               | Collected. Skipped on Firefox, which doesn't log failed resources |
 | CON-05 | N    | error_user adds the Bolt T-Shirt                          | Known bug: `Failed to add item to the cart.`, and the badge stays hidden |
 | CON-06 | P    | error_user adds the Backpack, with the fixture's check on | Badge shows 1 and the test passes                                |
+| CON-07 | P    | Logging in triggers SauceDemo's telemetry                 | Answered locally with 200 by the `stubTelemetry` fixture, not by the real service (401) |
+
+### 6.7 Visual regression (`tests/visual/`)
+
+Baselines are kept per browser and per OS: `win32` made locally, `linux` made in Playwright's Docker image, which CI also runs in.
+
+| ID     | Type | Scenario                                        | Expected result                                                                 |
+|--------|------|-------------------------------------------------|---------------------------------------------------------------------------------|
+| VIS-01 | P    | Inventory page, full page, prices hidden        | Matches `inventory.png`                                                         |
+| VIS-02 | P    | Cart with the Backpack, full page               | Matches `cart.png`                                                              |
+| VIS-03 | N    | visual_user's inventory, prices hidden the same way | `test.fail`: differs from `inventory.png`. Skipped while snapshots are written, so it can't overwrite the baseline |
+
+### 6.8 Accessibility (`tests/a11y/`)
+
+The gate is axe's WCAG 2.0, 2.1 and 2.2 rules at levels A and AA, with zero violations allowed. Best-practice rules are not gated (see README).
+
+| ID      | Type | Scenario                                      | Expected result               |
+|---------|------|-----------------------------------------------|-------------------------------|
+| A11Y-01 | P    | Login page showing an error                   | No violations                 |
+| A11Y-02 | P    | Inventory page                                | No violations                 |
+| A11Y-03 | P    | Inventory with the burger menu open           | No violations                 |
+| A11Y-04 | P    | Product detail page                           | No violations                 |
+| A11Y-05 | P    | Cart with one item                            | No violations                 |
+| A11Y-06 | P    | Checkout step one showing an error            | No violations                 |
+| A11Y-07 | P    | Checkout overview                             | No violations                 |
+| A11Y-08 | P    | Order complete page                           | No violations                 |
+| A11Y-09 | N    | An image without alt text is planted          | `image-alt` is reported, proving the gate can fail |
+
+### 6.9 Mobile viewport (`tests/mobile/`)
+
+The `mobile-chrome` project (Pixel 7) runs the whole suite. These two tests prove it really renders the phone layout.
+
+| ID     | Type | Scenario                         | Expected result                                  |
+|--------|------|----------------------------------|--------------------------------------------------|
+| MOB-01 | P    | Inventory on `mobile-chrome`     | Mobile device, viewport under 500 px, products in one column. Skipped on the other projects |
+| MOB-02 | P    | Inventory on desktop             | Products in two columns. Skipped on the phone    |
 
 ### Coverage summary
 
@@ -320,9 +372,14 @@ Per browser, counted from `npx playwright test --list`.
 | Products       | 9        | 2        | 11    |
 | Cart           | 9        | 1        | 10    |
 | Checkout       | 8        | 6        | 14    |
-| Console errors | 1        | 5        | 6     |
+| Console errors | 2        | 5        | 7     |
+| Visual         | 2        | 1        | 3     |
+| Accessibility  | 8        | 1        | 9     |
+| Mobile layout  | 2        | 0        | 2     |
 | E2E            | 1        | 0        | 1     |
-| **Total**      | **31**   | **20**   | **51**|
+| **Total**      | **44**   | **22**   | **66**|
+
+Each of the four projects (Chromium, Firefox, WebKit, Pixel 7) runs all 66. MOB-01 and MOB-02 each skip on the other layout.
 
 ---
 
@@ -337,6 +394,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
+  globalSetup: require.resolve('./global-setup.js'), // clears allure-results
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,
@@ -348,6 +406,7 @@ module.exports = defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
+    ['allure-playwright', { resultsDir: 'allure-results' }],
   ],
 
   use: {
@@ -380,9 +439,16 @@ module.exports = defineConfig({
       },
       dependencies: ['setup'],
     },
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
   ],
 });
 ```
+
+CI merges the shards with `playwright.merge.config.js`, which lists the HTML reporter and `reporters/merge-safe-allure.js`.
 
 ### 7.2 `.env.example`
 
@@ -393,6 +459,7 @@ LOCKED_OUT_USER=locked_out_user
 PROBLEM_USER=problem_user
 PERFORMANCE_GLITCH_USER=performance_glitch_user
 ERROR_USER=error_user
+VISUAL_USER=visual_user
 PASSWORD=secret_sauce
 ```
 
@@ -404,6 +471,8 @@ PASSWORD=secret_sauce
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium",
     "test:all-browsers": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:mobile": "playwright test --project=mobile-chrome",
+    "test:visual:update-linux": "node scripts/update-linux-snapshots.js",
     "test:smoke": "playwright test --grep @smoke",
     "test:regression": "playwright test --grep @regression",
     "test:negative": "playwright test --grep @negative",
@@ -411,6 +480,7 @@ PASSWORD=secret_sauce
     "test:debug": "playwright test --debug --project=chromium",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
+    "report:allure": "allure generate allure-results",
     "codegen": "playwright codegen https://www.saucedemo.com",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
@@ -429,6 +499,9 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+allure-results/
+allure-report/
+allure-history/
 ```
 
 ---
@@ -553,12 +626,12 @@ Pick any, in any order, once Phases 1–7 are done.
 
 | Goal                        | What you build                                                                                     | Concept learned                          |
 |-----------------------------|----------------------------------------------------------------------------------------------------|------------------------------------------|
-| Visual regression           | `toHaveScreenshot()` on inventory and cart pages; run with `visual_user` and watch it fail         | Snapshot management, `--update-snapshots`|
+| Visual regression (done)    | `toHaveScreenshot()` on inventory and cart pages; run with `visual_user` and watch it fail. Baselines per OS, Linux ones made in Playwright's Docker image, which CI runs in | Snapshot management, `--update-snapshots`|
 | Console error detection (done) | Automatic fixture that collects `page.on('console')` errors and `page.on('pageerror')` exceptions and fails the test if any; run with `error_user`. `pageerror` is needed because most of `error_user`'s failures are uncaught exceptions | Event listeners, custom fixtures |
-| Accessibility checks        | `@axe-core/playwright` scan on each page                                                           | Automated a11y                           |
-| Mobile viewport             | Add `Pixel 7` project; adjust `HeaderComponent` for mobile menu                                    | Device emulation                         |
+| Accessibility checks (done) | `@axe-core/playwright` scan on each page, gated on WCAG A/AA rules                                 | Automated a11y                           |
+| Mobile viewport (done)      | Add `Pixel 7` project. `HeaderComponent` turned out to need no change: the menu's markup is the same on mobile | Device emulation                 |
 | Sharding in CI (done)       | Matrix strategy with `--shard=1/3`, merge with `merge-reports`. With three projects of equal size, each shard turns out to be one browser | Blob reporter, scaling |
-| Allure or Monocart reporter | Second reporter with history and trends                                                            | Reporter plugins                         |
+| Allure or Monocart reporter (done: Allure 3) | Second reporter with history and trends; CI keeps the history in the Actions cache | Reporter plugins                         |
 | TypeScript migration        | Rename to `.ts`, add types to page objects                                                         | Type safety in test code                 |
 | Second target app           | Point the same framework at automationexercise.com with registration flows                         | Framework reuse, abstraction quality     |
 
@@ -610,10 +683,13 @@ When this project comes up, be ready to speak to:
 1. **Why Playwright over Selenium or Cypress.** Auto-waiting, multi-browser including WebKit, built-in test runner, trace viewer, first-class fixtures.
 2. **How the framework is structured and why.** POM for maintainability, fixtures for dependency injection, data files for separation of data from logic, components for shared UI.
 3. **How you handle authentication.** `storageState` via a setup project; auth tests opt out.
-4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once. CI enforces the policy: a test that only passes on retry fails the run, so a flake can't hide behind a green badge. The trade-off is that a brief outage on the site under test can also turn it red. Evidence before fixes: when a WebKit click was lost once on CI, the failing attempt had no trace, so WebKit now keeps one. Tracing every run in all browsers was tried first and made Firefox clicks stall locally (2 of 4 full runs failed, against 3 of 3 clean without it), so it's limited to WebKit.
+4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once. CI enforces the policy: a test that only passes on retry fails the run, so a flake can't hide behind a green badge. The trade-off is that a brief outage on the site under test can also turn it red. Evidence before fixes: when a WebKit click was lost once on CI, the failing attempt had no trace, so WebKit now keeps one. Tracing every run in all browsers was tried first and made Firefox clicks stall locally (2 of 4 full runs failed, against 3 of 3 clean without it), so it's limited to WebKit. That WebKit trace paid off: a later CI flake turned out to be SauceDemo's third-party telemetry answering 502, which WebKit reports as CORS errors that don't name the URL. Instead of widening the console filter, the tests now answer that telemetry locally, so they no longer depend on someone else's service.
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
-6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts.
+6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts. An Allure report alongside it, with trends: CI restores the previous runs' history from the Actions cache before generating it. Getting Allure to work with sharding meant reading the reporter's source: in merge mode it crashed on an empty project list and turned the merge red, so a small subclass guards that one call.
 7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.
+8. **Visual regression.** Screenshots differ between operating systems, so baselines are kept per OS. The Linux ones are made in Playwright's Docker image, and CI runs in that same image, so they match pixel for pixel. `visual_user` is the planted failure. Its prices are random on every load, so both sides hide them with the same stylesheet. A review caught that the first version masked them only in the new screenshot, which made the expected failure guaranteed. Now the same test logged in as `standard_user` goes red with "Expected to fail, but passed". Its test shares the real baseline, so it skips itself while snapshots are being written; otherwise `--update-snapshots` would replace the good baseline with the broken page (that happened once during recon).
+9. **Accessibility.** axe scans 8 page states against WCAG A/AA rules, with zero violations allowed. SauceDemo passes, so a planted image without alt text proves the gate can fail. Best-practice findings, such as no `h1` on any page, are documented rather than gated.
+10. **Mobile.** A Pixel 7 project runs the whole suite. The plan expected the header to need changes for mobile, but recon showed the same markup, so none were made. Two layout tests prove the project really renders the phone layout.
 
 ---
 
