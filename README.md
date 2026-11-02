@@ -44,7 +44,7 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 
 For the quickest full health check, run `npx playwright test tests/e2e`. It's one test that goes from login through to a completed order.
 
-Failures attach a screenshot and video to the HTML report. To capture a trace for a local failure, run `npx playwright test --trace on` and open it with `npx playwright show-trace <path-to-trace.zip>`.
+Failures attach a screenshot and video to the HTML report. A retry also gets a trace, and on WebKit a failing first attempt keeps one too, to diagnose a rare lost click. To capture a trace for a local failure, run `npx playwright test --trace on` and open it with `npx playwright show-trace <path-to-trace.zip>`.
 
 ## Authentication state
 

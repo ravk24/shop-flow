@@ -36,7 +36,13 @@ module.exports = defineConfig({
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'], storageState: '.auth/standard.json' },
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: '.auth/standard.json',
+        // WebKit only: keep a trace of a failing first attempt, to diagnose its rare lost clicks.
+        // Tracing every run in all browsers made Firefox clicks stall locally, so the others keep on-first-retry.
+        trace: 'retain-on-failure-and-retries',
+      },
       dependencies: ['setup'],
     },
   ],
