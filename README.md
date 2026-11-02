@@ -83,7 +83,7 @@ Two timing failures only appeared once Firefox and WebKit were enabled. Both are
 
 ## CI
 
-GitHub Actions runs two jobs on every push and on pull requests to `main`:
+GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 - `test` runs the suite in three shards, as separate jobs, each with 2 workers and up to 2 retries. With today's test order, each shard turns out to be one browser: Chromium, Firefox, WebKit. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a browser-specific failure is visible at a glance.
 - `merge-reports` combines the three shards' blob reports into one HTML report, even if a shard failed.
