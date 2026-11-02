@@ -1,6 +1,7 @@
 const { test, expect } = require('../../fixtures/pages.fixture');
 const { products, allProducts } = require('../../data/products');
 const { users } = require('../../data/users');
+const { TELEMETRY_URL } = require('../../utils/console');
 
 test.describe('console errors', () => {
   test.beforeEach(async ({ inventoryPage }) => {
@@ -72,5 +73,20 @@ test.describe('console errors - error_user', () => {
     await inventoryPage.addToCart(products.backpack.name);
 
     await expect(inventoryPage.header.cartBadge).toHaveText('1');
+  });
+});
+
+test.describe('console errors - telemetry', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("answers SauceDemo's telemetry locally @regression", async ({ page, loginPage, inventoryPage }) => {
+    // The real service answers 401, and sometimes a 5xx that WebKit reports as CORS errors. The stub answers 200.
+    const telemetry = page.waitForResponse(TELEMETRY_URL);
+
+    await loginPage.goto();
+    await loginPage.login(users.standard.username, users.standard.password);
+    await expect(inventoryPage.items).toHaveCount(allProducts.length);
+
+    expect((await telemetry).status()).toBe(200);
   });
 });
