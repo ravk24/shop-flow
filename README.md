@@ -2,7 +2,7 @@
 
 [![Playwright Tests](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml)
 
-End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and JavaScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox, WebKit and an emulated Pixel 7, with visual regression, accessibility scans, console error detection and an Allure report.
+End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and TypeScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox, WebKit and an emulated Pixel 7, with visual regression, accessibility scans, console error detection and an Allure report.
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
@@ -41,7 +41,8 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | `npm run report`       | Open the last HTML report                      |
 | `npm run report:allure` | Build the Allure report from the last run into `allure-report/index.html` |
 | `npm run codegen`      | Record locators against SauceDemo              |
-| `npm run lint`         | Run ESLint; warnings fail too                  |
+| `npm run typecheck`    | Type-check with `tsc` (writes no files)        |
+| `npm run lint`         | Run ESLint, type-aware; warnings fail too      |
 | `npm run format`       | Format the code with Prettier                  |
 | `npm run format:check` | Check formatting without changing files        |
 
@@ -51,7 +52,7 @@ Failures attach a screenshot and video to the HTML report. A retry also gets a t
 
 ## Authentication state
 
-A `setup` project (`tests/auth.setup.js`) logs in once per run and saves the session to `.auth/standard.json`. That file is generated and git-ignored. Tests then load it and start already logged in, except `tests/auth/*.spec.js`, which opt out because they test logging in.
+A `setup` project (`tests/auth.setup.ts`) logs in once per run and saves the session to `.auth/standard.json`. That file is generated and git-ignored. Tests then load it and start already logged in, except `tests/auth/*.spec.ts`, which opt out because they test logging in.
 
 - SauceDemo's login cookie expires after 10 minutes, so a saved file goes stale. Normal runs create a new one, but a run with `--no-deps` reuses whatever is there.
 - `npm run test:ui` lists `setup` as a separate project. Run it first, and again once the state has expired.
@@ -71,16 +72,16 @@ How they behave in a run:
 
 ## Console errors
 
-Every test fails at the end if the page logged a `console.error` or threw an uncaught exception, through an automatic fixture in `fixtures/pages.fixture.js`. Uncaught exceptions matter most here: nearly all of `error_user`'s failures arrive that way, not through the console.
+Every test fails at the end if the page logged a `console.error` or threw an uncaught exception, through an automatic fixture in `fixtures/pages.fixture.ts`. Uncaught exceptions matter most here: nearly all of `error_user`'s failures arrive that way, not through the console.
 
-- **Ignored on purpose (`utils/console.js`):** the 404 status SauceDemo's server gives a direct visit to its `.html` pages (seen on the inventory, product detail, cart and both checkout pages). If new noise appears, read it before adding it to this list.
+- **Ignored on purpose (`utils/console.ts`):** the 404 status SauceDemo's server gives a direct visit to its `.html` pages (seen on the inventory, product detail, cart and both checkout pages). If new noise appears, read it before adding it to this list.
 - **Telemetry is answered locally:** SauceDemo posts telemetry to `events.backtrace.io` with placeholder credentials. An automatic fixture answers those requests with a 200, so the tests don't depend on that service. Filtering wasn't enough: the service normally answers 401, but once on CI it answered 502, and WebKit reported that as CORS errors that don't name the URL, which no narrow filter could tell apart from a real one.
 - **To read errors in a test instead of failing on them:** use `test.use({ failOnConsoleErrors: false })` and assert on the `consoleErrors` fixture.
 - **What it doesn't catch:** `alert`s (such as `error_user`'s "Sorting is broken!"), errors after a test's last action, and pages other than the test's own `page`. Firefox doesn't log failed resources to the console, so a missing asset is only caught on Chromium and WebKit.
 
 ## Visual regression
 
-`tests/visual/` compares full-page screenshots of the inventory and the cart against committed baselines in `tests/visual/visual.spec.js-snapshots/`. Rendering differs between operating systems, so each browser has a `-win32` and a `-linux` baseline. There are none for macOS. On a Mac the first run fails with "A snapshot doesn't exist" and writes your own baselines, which later runs then pass against, so open those images and check them before trusting the tests.
+`tests/visual/` compares full-page screenshots of the inventory and the cart against committed baselines in `tests/visual/visual.spec.ts-snapshots/`. Rendering differs between operating systems, so each browser has a `-win32` and a `-linux` baseline. There are none for macOS. On a Mac the first run fails with "A snapshot doesn't exist" and writes your own baselines, which later runs then pass against, so open those images and check them before trusting the tests.
 
 - **After an intended UI change on Windows:** run `npx playwright test --grep @visual --update-snapshots=all`, then open the changed PNGs before committing them.
 - **Linux (what CI compares against):** run `npm run test:visual:update-linux` with Docker running. It uses the same Playwright image as CI, `mcr.microsoft.com/playwright:v<installed version>-noble`, so the baselines match CI pixel for pixel. When you upgrade `@playwright/test`, bump the image tag in `.github/workflows/playwright.yml` too, then regenerate.
@@ -116,11 +117,15 @@ GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 - `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
 - `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
-- `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
+- `lint` runs the type-check, ESLint and the Prettier check, so a type or style failure is reported apart from a test failure.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
 To download the reports, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
+
+## TypeScript
+
+Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Two files stay JavaScript because Node runs them directly: `eslint.config.js` and `scripts/update-linux-snapshots.js`.
 
 ## Project layout
 

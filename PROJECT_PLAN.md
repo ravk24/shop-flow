@@ -1,13 +1,13 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 8 complete; Phase 9 (cleanup) done
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 9 complete; Phase 10 (TypeScript) done
 
 ---
 
 ## 1. Purpose
 
-ShopFlow is a learning project whose output is a portfolio-grade end-to-end test automation framework built with Playwright and JavaScript. It targets a public demo e-commerce site and covers authentication, product selection, shopping cart, and checkout workflows.
+ShopFlow is a learning project whose output is a portfolio-grade end-to-end test automation framework built with Playwright and TypeScript (written in JavaScript first, migrated in Phase 10). It targets a public demo e-commerce site and covers authentication, product selection, shopping cart, and checkout workflows.
 
 The project exists to make the following resume claim true and defensible in an interview:
 
@@ -61,7 +61,7 @@ Credentials are public and are not secrets, but the project still reads them fro
 
 | Concern         | Choice                                   | Notes                                                  |
 |-----------------|------------------------------------------|--------------------------------------------------------|
-| Language        | JavaScript (CommonJS)                    | Matches the resume. TypeScript is a later migration.  |
+| Language        | TypeScript 6.0 (strict, type-check only) | Playwright runs the `.ts` files itself; `tsc` emits nothing. Migrated from JavaScript in Phase 10 |
 | Runtime         | Node.js 24 (installed: v24.18.0)         | 20.19+, 22.13+ or 24+ (ESLint 10's engines)           |
 | Test runner     | `@playwright/test`                       | Built-in fixtures, parallelism, retries, reporters    |
 | Browsers        | Chromium, Firefox, WebKit, Pixel 7 (Chromium) | `npm run test:chromium` is the fast local loop   |
@@ -70,7 +70,7 @@ Credentials are public and are not secrets, but the project still reads them fro
 | Reporting       | Playwright HTML reporter + `list`, Allure 3 | Traces, screenshots, videos on failure; Allure adds history and trends |
 | Accessibility   | `@axe-core/playwright`                   | WCAG A/AA rules, Phase 8                               |
 | CI              | GitHub Actions                           | Report uploaded as workflow artifact                   |
-| Lint/format     | ESLint + Prettier                        | Enforced in CI, warnings fail (Phase 7)                |
+| Lint/format     | `tsc`, ESLint (type-aware) + Prettier    | Enforced in CI, warnings fail (Phase 7; types Phase 10) |
 
 ---
 
@@ -83,65 +83,65 @@ shopflow/
 │       └── playwright.yml          # CI: install, run, upload report
 ├── .auth/                          # storageState files (git-ignored)
 ├── data/
-│   ├── users.js                    # user credentials read from env
-│   ├── products.js                 # known product names / prices
-│   └── checkout.data.js            # valid and invalid customer info
+│   ├── users.ts                    # user credentials read from env
+│   ├── products.ts                 # known product names / prices
+│   └── checkout.data.ts            # valid and invalid customer info
 ├── fixtures/
-│   └── pages.fixture.js            # extends `test` with page-object fixtures
+│   └── pages.fixture.ts            # extends `test` with page-object fixtures
 ├── pages/
-│   ├── BasePage.js
-│   ├── LoginPage.js
-│   ├── InventoryPage.js
-│   ├── ProductDetailPage.js
-│   ├── CartPage.js
-│   ├── CheckoutInfoPage.js
-│   ├── CheckoutOverviewPage.js
-│   └── CheckoutCompletePage.js
+│   ├── BasePage.ts
+│   ├── LoginPage.ts
+│   ├── InventoryPage.ts
+│   ├── ProductDetailPage.ts
+│   ├── CartPage.ts
+│   ├── CheckoutInfoPage.ts
+│   ├── CheckoutOverviewPage.ts
+│   └── CheckoutCompletePage.ts
 ├── components/
-│   └── HeaderComponent.js          # cart badge, burger menu, logout
+│   └── HeaderComponent.ts          # cart badge, burger menu, logout
 ├── tests/
-│   ├── auth.setup.js               # logs in once, saves storageState
+│   ├── auth.setup.ts               # logs in once, saves storageState
 │   ├── auth/
-│   │   ├── login.positive.spec.js
-│   │   └── login.negative.spec.js
+│   │   ├── login.positive.spec.ts
+│   │   └── login.negative.spec.ts
 │   ├── products/
-│   │   ├── inventory.spec.js
-│   │   └── product-detail.spec.js
+│   │   ├── inventory.spec.ts
+│   │   └── product-detail.spec.ts
 │   ├── cart/
-│   │   └── cart.spec.js
+│   │   └── cart.spec.ts
 │   ├── checkout/
-│   │   ├── checkout.positive.spec.js
-│   │   └── checkout.negative.spec.js
+│   │   ├── checkout.positive.spec.ts
+│   │   └── checkout.negative.spec.ts
 │   ├── console/
-│   │   └── console-errors.spec.js
+│   │   └── console-errors.spec.ts
 │   ├── visual/
-│   │   ├── visual.spec.js
-│   │   └── visual.spec.js-snapshots/ # baselines per browser and OS
+│   │   ├── visual.spec.ts
+│   │   └── visual.spec.ts-snapshots/ # baselines per browser and OS
 │   ├── a11y/
-│   │   └── a11y.spec.js
+│   │   └── a11y.spec.ts
 │   ├── mobile/
-│   │   └── layout.spec.js
+│   │   └── layout.spec.ts
 │   └── e2e/
-│       └── purchase-journey.spec.js # full smoke journey
+│       └── purchase-journey.spec.ts # full smoke journey
 ├── reporters/
-│   └── allure.js                   # Allure reporter fixed for merge-reports, clears old results
+│   └── allure.ts                   # Allure reporter fixed for merge-reports, clears old results
 ├── scripts/
 │   └── update-linux-snapshots.js   # Linux baselines in Playwright's Docker image
 ├── utils/
-│   ├── a11y.js                     # WCAG tags, readable violation list
-│   ├── console.js                  # known console noise filter
-│   ├── price.js                    # "$29.99" -> 29.99, tax calc
-│   └── logger.js
+│   ├── a11y.ts                     # WCAG tags, readable violation list
+│   ├── console.ts                  # known console noise filter
+│   └── price.ts                    # "$29.99" -> 29.99, tax calc
 ├── .env.example
 ├── .gitignore
 ├── .prettierrc
 ├── allurerc.mjs                    # Allure output, history file, single-file report
 ├── eslint.config.js
 ├── package.json
-├── playwright.config.js
-├── playwright.merge.config.js      # CI: HTML and Allure from the merged shards
+├── playwright.config.ts
+├── playwright.merge.config.ts      # CI: HTML and Allure from the merged shards
 ├── PROJECT_PLAN.md                 # this file
-└── README.md                       # short: how to install and run
+├── README.md                       # short: how to install and run
+└── tsconfig.json                   # strict type-checking, no output
 ```
 
 ---
@@ -159,12 +159,18 @@ shopflow/
 
 Example skeleton:
 
-```js
-// pages/LoginPage.js
-const { BasePage } = require('./BasePage');
+```ts
+// pages/LoginPage.ts
+import type { Locator, Page } from '@playwright/test';
+import { BasePage } from './BasePage';
 
-class LoginPage extends BasePage {
-  constructor(page) {
+export class LoginPage extends BasePage {
+  readonly username: Locator;
+  readonly password: Locator;
+  readonly loginButton: Locator;
+  readonly errorMessage: Locator;
+
+  constructor(page: Page) {
     super(page);
     this.username = page.getByTestId('username');
     this.password = page.getByTestId('password');
@@ -172,43 +178,45 @@ class LoginPage extends BasePage {
     this.errorMessage = page.getByTestId('error');
   }
 
-  async goto() {
+  override async goto(): Promise<void> {
     await super.goto('/');
   }
 
-  async login(username, password) {
+  async login(username: string, password: string): Promise<void> {
     await this.username.fill(username);
     await this.password.fill(password);
     await this.loginButton.click();
   }
 }
-
-module.exports = { LoginPage };
 ```
 
 ### 5.2 Custom fixtures
 
-`fixtures/pages.fixture.js` extends the base `test` so every spec receives ready-made page objects:
+`fixtures/pages.fixture.ts` extends the base `test` so every spec receives ready-made page objects:
 
-```js
-const base = require('@playwright/test');
-const { LoginPage } = require('../pages/LoginPage');
-const { InventoryPage } = require('../pages/InventoryPage');
+```ts
+import { test as base, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+import { InventoryPage } from '../pages/InventoryPage';
 // ...
 
-exports.test = base.test.extend({
+type Fixtures = { loginPage: LoginPage; inventoryPage: InventoryPage /* ... */ };
+
+export const test = base.extend<Fixtures>({
   loginPage: async ({ page }, use) => use(new LoginPage(page)),
   inventoryPage: async ({ page }, use) => use(new InventoryPage(page)),
   // ...
 });
-exports.expect = base.expect;
+export { expect };
 ```
+
+The `Fixtures` type is what lets a spec's `async ({ loginPage })` know `loginPage` is a `LoginPage`, so a misspelt method is a type error rather than a runtime one.
 
 Specs then import `test` and `expect` from the fixture file instead of from `@playwright/test`.
 
 ### 5.3 Authentication state
 
-- `tests/auth.setup.js` runs as a dedicated `setup` project, logs in as `standard_user`, and saves `.auth/standard.json`.
+- `tests/auth.setup.ts` runs as a dedicated `setup` project, logs in as `standard_user`, and saves `.auth/standard.json`.
 - All non-auth projects declare `dependencies: ['setup']` and `storageState: '.auth/standard.json'`.
 - Auth tests themselves use `test.use({ storageState: { cookies: [], origins: [] } })` to start logged out.
 
@@ -225,10 +233,10 @@ Priority order:
 
 ### 5.5 Test data
 
-- `data/users.js` reads `process.env.STANDARD_USER`, etc., with the public defaults as fallback.
-- `data/products.js` lists the six products with names and prices so tests can assert totals without hard-coding strings in specs.
-- `data/checkout.data.js` exports a `validCustomer` object and an array of `invalidCustomers` (one blank field each, plus one with all three blank) with the expected error text, for data-driven negative tests.
-- `data/login.data.js` exports `invalidLogins`, the data-driven login failures.
+- `data/users.ts` reads `process.env.STANDARD_USER`, etc., with the public defaults as fallback.
+- `data/products.ts` lists the six products with names and prices so tests can assert totals without hard-coding strings in specs.
+- `data/checkout.data.ts` exports a `validCustomer` object and an array of `invalidCustomers` (one blank field each, plus one with all three blank) with the expected error text, for data-driven negative tests.
+- `data/login.data.ts` exports `invalidLogins`, the data-driven login failures.
 
 ### 5.6 Tagging
 
@@ -294,7 +302,7 @@ AUTH-04 to AUTH-06 are implemented as one data-driven test over an array of case
 |---------|------|----------------------------------------------------------------------|-------------------------------------------------------------|
 | CHK-01  | P S  | Full checkout with one item                                          | "Thank you for your order!" and "Back Home" button          |
 | CHK-02  | P    | Overview lists the exact items from the cart                         | Names and prices match                                      |
-| CHK-03  | P    | Item total equals sum of item prices                                 | Computed from `data/products.js`                            |
+| CHK-03  | P    | Item total equals sum of item prices                                 | Computed from `data/products.ts`                            |
 | CHK-04  | P    | Tax is 8% of item total (rounded to cents)                           | `tax === round(subtotal * 0.08, 2)`                         |
 | CHK-05  | P    | Total equals item total + tax                                        | Exact match                                                 |
 | CHK-06  | P    | Cancel from step one returns to cart                                 | URL `/cart.html`, items intact                              |
@@ -387,14 +395,15 @@ Each of the four projects (Chromium, Firefox, WebKit, Pixel 7) runs all 67. MOB-
 
 ## 7. Configuration
 
-### 7.1 `playwright.config.js` (target shape)
+### 7.1 `playwright.config.ts` (target shape)
 
-```js
-// @ts-check
-require('dotenv').config({ quiet: true });
-const { defineConfig, devices } = require('@playwright/test');
+```ts
+import dotenv from 'dotenv';
+import { defineConfig, devices } from '@playwright/test';
 
-module.exports = defineConfig({
+dotenv.config({ quiet: true });
+
+export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -407,7 +416,7 @@ module.exports = defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['./reporters/allure.js', { resultsDir: 'allure-results' }],
+    ['./reporters/allure.ts', { resultsDir: 'allure-results' }],
   ],
 
   use: {
@@ -419,7 +428,7 @@ module.exports = defineConfig({
   },
 
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.js/ },
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: '.auth/standard.json' },
@@ -449,7 +458,7 @@ module.exports = defineConfig({
 });
 ```
 
-CI merges the shards with `playwright.merge.config.js`, which lists the HTML reporter and the same `reporters/allure.js`.
+CI merges the shards with `playwright.merge.config.ts`, which lists the HTML reporter and the same `reporters/allure.ts`.
 
 ### 7.2 `.env.example`
 
@@ -485,7 +494,8 @@ PASSWORD=secret_sauce
     "codegen": "playwright codegen https://www.saucedemo.com",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p ."
   }
 }
 ```
@@ -511,6 +521,8 @@ allure-history/
 
 Each phase is roughly one focused session of 2–4 hours. Do them in order; later phases assume earlier ones.
 
+Phases 1 to 9 were built in JavaScript. The TypeScript migration (Phase 8's stretch table) renamed every file, so the file names below use `.ts`, as they are today.
+
 ### Phase 1 — Scaffold and first test
 
 **Goal:** A running Playwright project with one honest test and the HTML report open in a browser.
@@ -518,8 +530,8 @@ Each phase is roughly one focused session of 2–4 hours. Do them in order; late
 Tasks:
 1. `cd shopflow && npm init playwright@latest` — choose JavaScript, `tests` folder, add GitHub Actions workflow, install browsers.
 2. Delete the example specs. Install `dotenv`. Create `.env` from `.env.example`.
-3. Write `playwright.config.js` as in section 7.1 but with only the `chromium` project and no `setup` yet.
-4. Write `tests/auth/login.positive.spec.js` with **no page objects**: fill username, fill password, click, `expect(page).toHaveURL(/inventory/)`.
+3. Write `playwright.config.ts` as in section 7.1 but with only the `chromium` project and no `setup` yet.
+4. Write `tests/auth/login.positive.spec.ts` with **no page objects**: fill username, fill password, click, `expect(page).toHaveURL(/inventory/)`.
 5. Run `npx playwright test`, then `npx playwright show-report`.
 6. Deliberately break the test, re-run, open the trace.
 
@@ -532,9 +544,9 @@ Concepts to explain: auto-waiting, web-first assertions (`expect(locator).toBeVi
 **Goal:** The login test rewritten over page objects, and the first inventory test.
 
 Tasks:
-1. Create `pages/BasePage.js`, `pages/LoginPage.js`, `pages/InventoryPage.js`.
+1. Create `pages/BasePage.ts`, `pages/LoginPage.ts`, `pages/InventoryPage.ts`.
 2. Refactor the Phase 1 test to use `LoginPage` and `InventoryPage`.
-3. Add `components/HeaderComponent.js` with cart badge and menu locators; compose it into `InventoryPage`.
+3. Add `components/HeaderComponent.ts` with cart badge and menu locators; compose it into `InventoryPage`.
 4. Write PROD-01 (six products listed).
 5. Write a short `README.md` with install and run instructions.
 
@@ -547,8 +559,8 @@ Concepts to explain: why POM, what belongs in a page vs a test, composition over
 **Goal:** AUTH-01 to AUTH-09 passing.
 
 Tasks:
-1. Create `data/users.js`.
-2. Write `login.negative.spec.js` with a data-driven loop for AUTH-04 to AUTH-06.
+1. Create `data/users.ts`.
+2. Write `login.negative.spec.ts` with a data-driven loop for AUTH-04 to AUTH-06.
 3. Add AUTH-03, AUTH-07, AUTH-08.
 4. Add AUTH-02 logout using `HeaderComponent`.
 5. Add AUTH-09 with `performance_glitch_user` and observe that auto-wait handles it with no sleeps.
@@ -563,14 +575,14 @@ Concepts to explain: `test.describe`, data-driven tests via `for…of` over case
 **Goal:** Tests outside `auth/` never see the login page.
 
 Tasks:
-1. Create `fixtures/pages.fixture.js` exporting extended `test` and `expect`.
+1. Create `fixtures/pages.fixture.ts` exporting extended `test` and `expect`.
 2. Migrate every spec to import from the fixture.
-3. Create `tests/auth.setup.js` that logs in and calls `page.context().storageState({ path: '.auth/standard.json' })`.
+3. Create `tests/auth.setup.ts` that logs in and calls `page.context().storageState({ path: '.auth/standard.json' })`.
 4. Add the `setup` project and `dependencies` to the config; add `.auth/` to `.gitignore`.
-5. In `tests/auth/*.spec.js`, add `test.use({ storageState: { cookies: [], origins: [] } })`.
+5. In `tests/auth/*.spec.ts`, add `test.use({ storageState: { cookies: [], origins: [] } })`.
 6. Rewrite PROD-01 to start at `inventoryPage.goto()` directly.
 
-Done when: running only `products/inventory.spec.js` shows the setup project run once, then the test starts on the inventory page.
+Done when: running only `products/inventory.spec.ts` shows the setup project run once, then the test starts on the inventory page.
 
 Concepts to explain: fixtures vs `beforeEach`, fixture scopes (test vs worker), `storageState`, project dependencies, why this makes suites faster and less flaky.
 
@@ -579,10 +591,10 @@ Concepts to explain: fixtures vs `beforeEach`, fixture scopes (test vs worker), 
 **Goal:** PROD-02 to PROD-10 and CART-01 to CART-10 passing.
 
 Tasks:
-1. Create `data/products.js` and `utils/price.js`.
+1. Create `data/products.ts` and `utils/price.ts`.
 2. Implement sorting tests PROD-02 to PROD-05 by reading all names/prices with `allTextContents()` and comparing to a sorted copy.
-3. Create `pages/ProductDetailPage.js`; implement PROD-06 to PROD-08.
-4. Create `pages/CartPage.js`; implement CART-01 to CART-10.
+3. Create `pages/ProductDetailPage.ts`; implement PROD-06 to PROD-08.
+4. Create `pages/CartPage.ts`; implement CART-01 to CART-10.
 5. Add a `problem_user` describe block with `test.fail()` for PROD-09 and PROD-10, documenting the known bugs in comments.
 
 Done when: all product and cart tests pass on Chromium, and the two `test.fail` tests are reported as "expected failure", not as passes (checked in JSON output; the terminal shows ✘ and counts them as passed).
@@ -594,12 +606,12 @@ Concepts to explain: `locator.all()` vs `allTextContents()`, `nth()`, `filter({ 
 **Goal:** CHK-01 to CHK-14 and E2E-01 passing.
 
 Tasks:
-1. Create `pages/CheckoutInfoPage.js`, `CheckoutOverviewPage.js`, `CheckoutCompletePage.js`.
-2. Create `data/checkout.data.js` with `validCustomer` and `invalidCustomers`.
-3. Implement positive tests CHK-01 to CHK-08, computing expected totals from `data/products.js` and `utils/price.js`.
+1. Create `pages/CheckoutInfoPage.ts`, `CheckoutOverviewPage.ts`, `CheckoutCompletePage.ts`.
+2. Create `data/checkout.data.ts` with `validCustomer` and `invalidCustomers`.
+3. Implement positive tests CHK-01 to CHK-08, computing expected totals from `data/products.ts` and `utils/price.ts`.
 4. Implement data-driven CHK-09 to CHK-12.
 5. Implement CHK-13: run it once manually, record what SauceDemo actually does, and assert that behaviour.
-6. Write `tests/e2e/purchase-journey.spec.js` using `test.step` for each stage.
+6. Write `tests/e2e/purchase-journey.spec.ts` using `test.step` for each stage.
 
 Done when: `npm run test:smoke` runs AUTH-01, PROD-01, CART-01, CHK-01, E2E-01 and passes in under a minute.
 
@@ -633,7 +645,7 @@ Pick any, in any order, once Phases 1–7 are done.
 | Mobile viewport (done)      | Add `Pixel 7` project. `HeaderComponent` turned out to need no change: the menu's markup is the same on mobile | Device emulation                 |
 | Sharding in CI (done)       | Matrix strategy with `--shard=1/3`, merge with `merge-reports`. With three projects of equal size, each shard turns out to be one browser | Blob reporter, scaling |
 | Allure or Monocart reporter (done: Allure 3) | Second reporter with history and trends; CI keeps the history in the Actions cache | Reporter plugins                         |
-| TypeScript migration        | Rename to `.ts`, add types to page objects                                                         | Type safety in test code                 |
+| TypeScript migration (done, Phase 10) | Every file but the ESLint config and the Docker script renamed to `.ts`; typed page objects, fixtures and test data; strict `tsconfig`; `tsc` and type-aware ESLint in CI, so a missing `await` fails lint | Type safety in test code, typed fixtures |
 | Second target app           | Point the same framework at automationexercise.com with registration flows                         | Framework reuse, abstraction quality     |
 
 ---
@@ -641,8 +653,8 @@ Pick any, in any order, once Phases 1–7 are done.
 ## 9. Conventions
 
 **Naming**
-- Spec files: `<feature>.<positive|negative>.spec.js` or `<feature>.spec.js`.
-- Page classes: `PascalCasePage.js`, exported as a named export.
+- Spec files: `<feature>.<positive|negative>.spec.ts` or `<feature>.spec.ts`.
+- Page classes: `PascalCasePage.ts`, exported as a named export, with `readonly` locator fields.
 - Test titles: behaviour in plain English, present tense, lowercase start, with tags at the end.
   Good: `shows locked out error for locked_out_user @negative`
   Bad: `Test login 3`
@@ -669,11 +681,11 @@ Checked on 2026-11-03 (Phase 9), with the evidence for each item.
 
 - [x] All scenarios in section 6 implemented and passing on Chromium, Firefox, WebKit, and also Pixel 7. The original list had 44; the suite has grown to 67 tests per project. A full local run gives 264 passed and 5 skipped (the skips are by design).
 - [x] `test.fail` tests report as expected failures, not passes: 5 per project (PROD-09, PROD-10, CHK-14, CON-03, VIS-03). Each goes red with "Expected to fail, but passed" if its bug disappears; checked for CON-03, VIS-03 and A11Y-09's planted case.
-- [x] Zero `waitForTimeout` calls in the repo (grep over all `.js` outside `node_modules` and `docs`). Lint also enforces it.
+- [x] Zero `waitForTimeout` calls in the repo (grep over all `.ts` and `.js` outside `node_modules` and `docs`). Lint also enforces it.
 - [x] Zero locator strings inside spec files (grep for `getByTestId`, `getByRole`, `getByText`, `locator(`). Two exceptions by design: A11Y-09's planted image in `page.evaluate`, and `tests/visual/hide-prices.css`, which isn't a spec.
 - [x] `npm run test:smoke` completes in under 60 seconds locally: 21 tests in 14.9 s on all four projects.
 - [x] GitHub Actions passes on `main` and uploads the HTML report, plus the Allure report.
-- [x] ESLint and Prettier pass, in CI's `lint` job and locally.
+- [x] ESLint and Prettier pass, in CI's `lint` job and locally. Since Phase 10, `tsc` passes there too.
 - [x] `README.md` lets a stranger clone, install, and run tests in under five minutes: a fresh clone through `npm install`, `npx playwright install`, `.env` and `npm run test:smoke` took 31 s. Browsers were already cached on that machine; a first-ever download adds a few minutes, depending on bandwidth.
 - [ ] You can answer every "Concepts to explain" item in section 8 without notes. Only you can tick this one.
 
@@ -693,6 +705,7 @@ When this project comes up, be ready to speak to:
 8. **Visual regression.** Screenshots differ between operating systems, so baselines are kept per OS. The Linux ones are made in Playwright's Docker image, and CI runs in that same image, so they match pixel for pixel. `visual_user` is the planted failure. Its prices are random on every load, so both sides hide them with the same stylesheet. A review caught that the first version masked them only in the new screenshot, which made the expected failure guaranteed. Now the same test logged in as `standard_user` goes red with "Expected to fail, but passed". Its test shares the real baseline, so it skips itself while snapshots are being written; otherwise `--update-snapshots` would replace the good baseline with the broken page (that happened once during recon).
 9. **Accessibility.** axe scans 8 page states against WCAG A/AA rules, with zero violations allowed. SauceDemo passes, so a planted image without alt text proves the gate can fail. Best-practice findings, such as no `h1` on any page, are documented rather than gated.
 10. **Mobile.** A Pixel 7 project runs the whole suite. The plan expected the header to need changes for mobile, but recon showed the same markup, so none were made. Two layout tests prove the project really renders the phone layout.
+11. **TypeScript.** Migrated after the JavaScript suite was complete. Playwright runs `.ts` directly, so `tsc` only checks types. The payoff was concrete: type-aware lint now fails a page-object call missing its `await`, and the migration itself found a config pattern still matching `.setup.js`, which silently skipped login and failed 203 tests.
 
 ---
 
@@ -715,4 +728,5 @@ npm run test:debug              # step through with Inspector
 npm run report                  # open last HTML report
 npx playwright show-trace test-results/<folder>/trace.zip
 npm run codegen                 # record locators against SauceDemo
+npm run typecheck               # tsc, no output files
 ```
