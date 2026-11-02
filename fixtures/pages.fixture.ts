@@ -5,7 +5,7 @@ import { InventoryPage } from '../pages/InventoryPage';
 import { ProductDetailPage } from '../pages/ProductDetailPage';
 import { CartPage } from '../pages/CartPage';
 import { CheckoutOverviewPage } from '../pages/CheckoutOverviewPage';
-import { isKnownNoise, TELEMETRY_URL } from '../utils/console';
+import { isKnownNoise, TELEMETRY_URL, watchPageErrors } from '../utils/console';
 import { WCAG_TAGS } from '../utils/a11y';
 
 type Options = {
@@ -40,17 +40,10 @@ export const test = base.extend<Fixtures & Options>({
     { auto: true },
   ],
 
-  // Runs for every test. Fails it at the end if the page logged an error or threw.
-  // Limits: it watches this `page` only, can miss an error after a test's last action, and doesn't see alerts.
+  // Runs for every test. Fails it at the end if the page logged an error or threw (limits: see watchPageErrors).
   consoleErrors: [
     async ({ page, failOnConsoleErrors }, use) => {
-      const errors: string[] = [];
-      page.on('console', (message) => {
-        if (message.type() === 'error' && !isKnownNoise(message.text(), message.location().url)) {
-          errors.push(message.text());
-        }
-      });
-      page.on('pageerror', (error) => errors.push(error.message));
+      const errors = watchPageErrors(page, isKnownNoise);
 
       await use(errors);
 

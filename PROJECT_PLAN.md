@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 9 complete; Phase 10 (TypeScript) done
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 11 complete (Phase 10: TypeScript; Phase 11: second app, without registration)
 
 ---
 
@@ -85,10 +85,13 @@ shopflow/
 ├── data/
 │   ├── users.ts                    # user credentials read from env
 │   ├── products.ts                 # known product names / prices
-│   └── checkout.data.ts            # valid and invalid customer info
+│   ├── checkout.data.ts            # valid and invalid customer info
+│   └── automationexercise.data.ts  # second app: products, search, unknown login
 ├── fixtures/
-│   └── pages.fixture.ts            # extends `test` with page-object fixtures
+│   ├── pages.fixture.ts            # extends `test` with page-object fixtures
+│   └── automationexercise.fixture.ts # second app: ad blocking, console gate, axe, page objects
 ├── pages/
+│   ├── automationexercise/         # second app: products, detail, cart, login; goto names a 5xx overload
 │   ├── BasePage.ts
 │   ├── LoginPage.ts
 │   ├── InventoryPage.ts
@@ -123,13 +126,14 @@ shopflow/
 │   │   └── layout.spec.ts
 │   └── e2e/
 │       └── purchase-journey.spec.ts # full smoke journey
+├── tests-automationexercise/       # second app's specs (own config, Chromium, non-blocking in CI)
 ├── reporters/
 │   └── allure.ts                   # Allure reporter fixed for merge-reports, clears old results
 ├── scripts/
 │   └── update-linux-snapshots.js   # Linux baselines in Playwright's Docker image
 ├── utils/
 │   ├── a11y.ts                     # WCAG tags, readable violation list
-│   ├── console.ts                  # known console noise filter
+│   ├── console.ts                  # console-error gate and each app's noise filter
 │   └── price.ts                    # "$29.99" -> 29.99, tax calc
 ├── .env.example
 ├── .gitignore
@@ -138,6 +142,7 @@ shopflow/
 ├── eslint.config.js
 ├── package.json
 ├── playwright.config.ts
+├── playwright.automationexercise.config.ts # the second app
 ├── playwright.merge.config.ts      # CI: HTML and Allure from the merged shards
 ├── PROJECT_PLAN.md                 # this file
 ├── README.md                       # short: how to install and run
@@ -646,7 +651,7 @@ Pick any, in any order, once Phases 1–7 are done.
 | Sharding in CI (done)       | Matrix strategy with `--shard=1/3`, merge with `merge-reports`. With three projects of equal size, each shard turns out to be one browser | Blob reporter, scaling |
 | Allure or Monocart reporter (done: Allure 3) | Second reporter with history and trends; CI keeps the history in the Actions cache | Reporter plugins                         |
 | TypeScript migration (done, Phase 10) | Every file but the ESLint config, the Docker script and `allurerc.mjs` renamed to `.ts`; typed page objects, fixtures and test data; strict `tsconfig`; `tsc` and type-aware ESLint in CI, so a missing `await` fails lint | Type safety in test code, typed fixtures |
-| Second target app           | Point the same framework at automationexercise.com with registration flows                         | Framework reuse, abstraction quality     |
+| Second target app (done, Phase 11, without registration) | automationexercise.com: own config, specs, page objects, fixture and data, reusing `BasePage`, the console gate and the axe scanner. 12 tests on Chromium in a non-blocking CI job. Registration is left out: it creates a real account on a third-party site, which needs the owner's explicit go-ahead | Framework reuse, abstraction quality, testing a site you don't control |
 
 ---
 
@@ -706,6 +711,7 @@ When this project comes up, be ready to speak to:
 9. **Accessibility.** axe scans 8 page states against WCAG A/AA rules, with zero violations allowed. SauceDemo passes, so a planted image without alt text proves the gate can fail. Best-practice findings, such as no `h1` on any page, are documented rather than gated.
 10. **Mobile.** A Pixel 7 project runs the whole suite. The plan expected the header to need changes for mobile, but recon showed the same markup, so none were made. Two layout tests prove the project really renders the phone layout.
 11. **TypeScript.** Migrated after the JavaScript suite was complete. Playwright runs `.ts` directly, so `tsc` only checks types. The payoff was concrete: type-aware lint now fails a page-object call missing its `await`, and the migration itself found a config pattern still matching `.setup.js`, which silently skipped login and failed 203 tests.
+12. **A second app.** automationexercise.com reuses the base page, the console gate and the axe scanner through its own config and fixture. Testing a site you don't control raised new questions: keep it out of the blocking build, block its ads, name an overload instead of timing out, filter only the product pictures' load-shedding 502/503s while a 404, or a 503 on anything else, still fails, and decline to create real accounts on it.
 
 ---
 

@@ -8,6 +8,7 @@
     "test:all-browsers": "playwright test --project=chromium --project=firefox --project=webkit",
     "test:mobile": "playwright test --project=mobile-chrome",
     "test:visual:update-linux": "node scripts/update-linux-snapshots.js",
+    "test:automationexercise": "playwright test --config playwright.automationexercise.config.ts",
     "test:smoke": "playwright test --grep @smoke",
     "test:regression": "playwright test --grep @regression",
     "test:negative": "playwright test --grep @negative",

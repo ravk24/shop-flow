@@ -27,7 +27,8 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 
 | Command                | What it does                                   |
 |------------------------|------------------------------------------------|
-| `npm test`             | Run the whole suite headless on all four projects |
+| `npm test`             | Run the whole SauceDemo suite headless on all four projects |
+| `npm run test:automationexercise` | Run the second app's suite (automationexercise.com, Chromium) |
 | `npm run test:all-browsers` | Run on the three desktop browsers only    |
 | `npm run test:chromium` | Run on Chromium only, the fast local loop     |
 | `npm run test:mobile`  | Run on the emulated Pixel 7 only               |
@@ -118,10 +119,22 @@ GitHub Actions runs these jobs on every push and on pull requests to `main`:
 - `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
 - `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
 - `lint` runs the type-check, ESLint and the Prettier check, so a type or style failure is reported apart from a test failure.
+- `automationexercise` runs the second app's suite and uploads its own `playwright-report-automationexercise` artifact. It is non-blocking (`continue-on-error`): the job can show red while the run and the badge stay green, because that site's load isn't this project's to control.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
 To download the reports, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
+
+## Second app: automationexercise.com
+
+The same framework also tests [automationexercise.com](https://automationexercise.com), to show it isn't tied to SauceDemo. It has its own config (`playwright.automationexercise.config.ts`), specs (`tests-automationexercise/`), page objects (`pages/automationexercise/`), fixture and data file. It reuses `BasePage`, the console-error gate (through `watchPageErrors` in `utils/console.ts`, with this site's own noise filter) and the axe scanner with the same WCAG tags. 12 tests on Chromium cover the product list, search, product detail, the cart, a rejected login and accessibility.
+
+- **Separate on purpose:** `npm test` and CI's blocking shards stay SauceDemo-only. This site is public, ad-funded and sometimes answers `503 This website is under heavy load`, so it runs with 2 workers, a 10 s `expect` timeout, and in a non-blocking CI job.
+- **Overload is named:** a page opened with `goto` that answers 5xx fails with `automationexercise.com answered 503 for /products: the site is overloaded or down`, not a locator timeout. A 5xx after a click (search, View Cart, the cart's add and delete calls) isn't checked that way; the console gate keeps the browser's message naming the URL. Product pictures sometimes answer 502 or 503 under load, and the gate ignores exactly those; a 404 picture, or a 503 on anything else, still fails.
+- **Ads are blocked** by an automatic fixture, and the console errors those aborted requests log are filtered by host. A failed load from an ad host missing from the list still fails a test; an unlisted ad that loads fine logs nothing, and would only show as a slower or obscured page.
+- **Known accessibility bugs:** every page checked has WCAG violations (`button-name` on the subscribe button, `color-contrast`), so its axe test is a `test.fail`, like SauceDemo's known bugs.
+- **Not tested: registration.** It would create (and delete) a real account on someone else's site, so it's left out until the project owner explicitly decides that's acceptable. A failed login with a made-up `.invalid` address creates nothing and is tested.
+- **Framework checks:** three tests prove the safety nets can fail: a routed 503 page, a planted console error, and routed failures (a 404 picture and a 503 logo, both counted, next to a 503 picture, ignored).
 
 ## TypeScript
 
@@ -130,12 +143,13 @@ Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.j
 ## Project layout
 
 ```
-pages/        Page objects: one class per page, locators and actions only
+pages/        Page objects: one class per page, locators and actions only (automationexercise/ for the second app)
 components/   Shared UI such as the header (cart badge, burger menu)
-fixtures/     Extends Playwright's test so specs receive page objects ready-made
+fixtures/     Extends Playwright's test so specs receive page objects ready-made, one file per app
 data/         Test data such as user credentials and products
-utils/        Small helpers such as price parsing, the console noise filter and axe's WCAG tags
-tests/        Specs grouped by feature; tests own the assertions
+utils/        Small helpers such as price parsing, the console-error gate and noise filters, axe's WCAG tags
+tests/        SauceDemo specs grouped by feature; tests own the assertions
+tests-automationexercise/  The second app's specs
 reporters/    The Allure reporter, fixed for merged shards and clearing old results
 scripts/      Regenerates the Linux screenshot baselines in Docker
 docs/         Design and implementation plans
