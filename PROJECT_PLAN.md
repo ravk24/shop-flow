@@ -372,7 +372,12 @@ module.exports = defineConfig({
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'], storageState: '.auth/standard.json' },
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: '.auth/standard.json',
+        // Keeps a trace of a failing first attempt; see section 11 point 4.
+        trace: 'retain-on-failure-and-retries',
+      },
       dependencies: ['setup'],
     },
   ],
@@ -605,7 +610,7 @@ When this project comes up, be ready to speak to:
 1. **Why Playwright over Selenium or Cypress.** Auto-waiting, multi-browser including WebKit, built-in test runner, trace viewer, first-class fixtures.
 2. **How the framework is structured and why.** POM for maintainability, fixtures for dependency injection, data files for separation of data from logic, components for shared UI.
 3. **How you handle authentication.** `storageState` via a setup project; auth tests opt out.
-4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once. CI enforces the policy: a test that only passes on retry fails the run, so a flake can't hide behind a green badge. The trade-off is that a brief outage on the site under test can also turn it red.
+4. **How you handle flakiness.** No hard waits, web-first assertions, retries only in CI, traces on first retry so flaky failures are diagnosable. Two real examples from enabling Firefox and WebKit: a click on the burger menu just before the app hides the menu leaves it open but not displayed, fixed by waiting for that condition rather than sleeping; and on WebKit under load, `fill()` can succeed with no text arriving, fixed by reading the field back and refilling once. CI enforces the policy: a test that only passes on retry fails the run, so a flake can't hide behind a green badge. The trade-off is that a brief outage on the site under test can also turn it red. Evidence before fixes: when a WebKit click was lost once on CI, the failing attempt had no trace, so WebKit now keeps one. Tracing every run in all browsers was tried first and made Firefox clicks stall locally (2 of 4 full runs failed, against 3 of 3 clean without it), so it's limited to WebKit.
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
 6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts.
 7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.
