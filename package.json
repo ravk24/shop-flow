@@ -19,7 +19,8 @@
     "codegen": "playwright codegen https://www.saucedemo.com",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p ."
   },
   "license": "MIT",
   "type": "commonjs",
@@ -34,7 +35,9 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-playwright": "2.12.1",
     "globals": "17.14.0",
-    "prettier": "3.9.10"
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
   },
   "dependencies": {
     "dotenv": "^18.0.9"

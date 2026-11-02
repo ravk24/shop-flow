@@ -49,7 +49,7 @@ jobs:
           merge-multiple: true
           path: all-blob-reports
       - name: Merge the shard reports
-        run: npx playwright merge-reports --config playwright.merge.config.js ./all-blob-reports
+        run: npx playwright merge-reports --config playwright.merge.config.ts ./all-blob-reports
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
@@ -93,6 +93,8 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm ci
+      - name: Type-check
+        run: npm run typecheck
       - name: Lint
         run: npm run lint
       - name: Check formatting
