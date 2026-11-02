@@ -66,6 +66,13 @@ How they behave in a run:
 - These three tests show `✘` in the list output but count as passed, and the run still exits 0.
 - If any of the bugs is ever fixed, the test reports `Expected to fail, but passed.` and the run goes red, which is the cue to remove `test.fail()`.
 
+## Browser notes
+
+Two timing failures only appeared once Firefox and WebKit were enabled. Both are handled in the page objects, not with sleeps or retries:
+
+- **Burger menu:** the app hides the menu about half a second after load, and a click just before that leaves it open but not displayed. `HeaderComponent.openMenu()` waits for the logout link to go hidden before clicking.
+- **Dropped text on WebKit:** under load, `fill()` can succeed with no text arriving in the field. `CheckoutInfoPage.fillField()` reads the value back and refills once. A value that's still wrong fails the test's own assertions. The trade-off is that a real Safari problem of this exact kind wouldn't be reported. It isn't established whether the fault is in WebKit or Playwright.
+
 ## CI
 
 GitHub Actions runs two jobs on every push and on pull requests to `main`:
