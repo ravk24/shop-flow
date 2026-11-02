@@ -18,9 +18,14 @@ const args = [
   image,
   '/bin/bash',
   '-c',
-  'npm ci && npx playwright test --grep @visual --update-snapshots=all',
+  // --reporter=list keeps the run from touching the host's HTML and Allure reports.
+  // The container runs as root, so on a Linux host the written PNGs are owned by root.
+  'npm ci && npx playwright test --grep @visual --update-snapshots=all --reporter=list',
 ];
 
 console.log(`docker ${args.join(' ')}`);
 const result = spawnSync('docker', args, { stdio: 'inherit' });
+if (result.error) {
+  console.error(`Could not run docker: ${result.error.message}. Is Docker installed and running?`);
+}
 process.exit(result.status ?? 1);

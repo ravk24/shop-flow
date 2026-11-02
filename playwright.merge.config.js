@@ -4,6 +4,6 @@ module.exports = {
   testDir: './tests',
   reporter: [
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['./reporters/merge-safe-allure.js', { resultsDir: 'allure-results' }],
+    ['./reporters/allure.js', { resultsDir: 'allure-results' }],
   ],
 };

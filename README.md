@@ -8,7 +8,7 @@ The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN
 
 ## Prerequisites
 
-- Node.js 20 or newer (developed on Node 24)
+- Node.js 20.19+ on the 20 line, 22.13+ on the 22 line, or 24+ (ESLint 10 needs one of these; developed on Node 24)
 - Git
 
 ## Install
@@ -17,7 +17,7 @@ The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN
 git clone <this-repo> shop-flow
 cd shop-flow
 npm install
-npx playwright install
+npx playwright install      # on Linux: npx playwright install --with-deps, for the system libraries WebKit needs
 cp .env.example .env        # PowerShell: Copy-Item .env.example .env
 ```
 
@@ -59,7 +59,7 @@ A `setup` project (`tests/auth.setup.js`) logs in once per run and saves the ses
 
 ## Known app bugs
 
-Three tests assert the correct behaviour and are marked with `test.fail()`, so these bugs stay tracked:
+These tests assert the correct behaviour and are marked with `test.fail()`, so the bugs stay tracked:
 
 - `problem_user` has broken sorting and broken product images, on purpose.
 - The checkout overview shows the item total as a raw float for 18 of the 63 possible carts, for example `Item total: $59.980000000000004`. This one affects the normal `standard_user`. It isn't known whether SauceDemo intends it.
@@ -73,14 +73,14 @@ How they behave in a run:
 
 Every test fails at the end if the page logged a `console.error` or threw an uncaught exception, through an automatic fixture in `fixtures/pages.fixture.js`. Uncaught exceptions matter most here: nearly all of `error_user`'s failures arrive that way, not through the console.
 
-- **Ignored on purpose (`utils/console.js`):** the 404 status SauceDemo's server gives a direct visit to any `.html` page. If new noise appears, read it before adding it to this list.
+- **Ignored on purpose (`utils/console.js`):** the 404 status SauceDemo's server gives a direct visit to its `.html` pages (seen on the inventory, product detail, cart and both checkout pages). If new noise appears, read it before adding it to this list.
 - **Telemetry is answered locally:** SauceDemo posts telemetry to `events.backtrace.io` with placeholder credentials. An automatic fixture answers those requests with a 200, so the tests don't depend on that service. Filtering wasn't enough: the service normally answers 401, but once on CI it answered 502, and WebKit reported that as CORS errors that don't name the URL, which no narrow filter could tell apart from a real one.
 - **To read errors in a test instead of failing on them:** use `test.use({ failOnConsoleErrors: false })` and assert on the `consoleErrors` fixture.
 - **What it doesn't catch:** `alert`s (such as `error_user`'s "Sorting is broken!"), errors after a test's last action, and pages other than the test's own `page`. Firefox doesn't log failed resources to the console, so a missing asset is only caught on Chromium and WebKit.
 
 ## Visual regression
 
-`tests/visual/` compares full-page screenshots of the inventory and the cart against committed baselines in `tests/visual/visual.spec.js-snapshots/`. Rendering differs between operating systems, so each browser has a `-win32` and a `-linux` baseline. There are none for macOS, so on a Mac these tests fail with "A snapshot doesn't exist" until you generate your own.
+`tests/visual/` compares full-page screenshots of the inventory and the cart against committed baselines in `tests/visual/visual.spec.js-snapshots/`. Rendering differs between operating systems, so each browser has a `-win32` and a `-linux` baseline. There are none for macOS. On a Mac the first run fails with "A snapshot doesn't exist" and writes your own baselines, which later runs then pass against, so open those images and check them before trusting the tests.
 
 - **After an intended UI change on Windows:** run `npx playwright test --grep @visual --update-snapshots=all`, then open the changed PNGs before committing them.
 - **Linux (what CI compares against):** run `npm run test:visual:update-linux` with Docker running. It uses the same Playwright image as CI, `mcr.microsoft.com/playwright:v<installed version>-noble`, so the baselines match CI pixel for pixel. When you upgrade `@playwright/test`, bump the image tag in `.github/workflows/playwright.yml` too, then regenerate.
@@ -106,15 +106,16 @@ The `mobile-chrome` project runs the whole suite on Chromium emulating a Pixel 7
 
 Two timing failures only appeared once Firefox and WebKit were enabled. Both are handled in the page objects, not with sleeps or retries:
 
-- **Burger menu:** the app hides the menu about half a second after load, and a click just before that leaves it open but not displayed. `HeaderComponent.openMenu()` waits for the logout link to go hidden before clicking.
-- **Dropped text on WebKit:** under load, `fill()` can succeed with no text arriving in the field. `CheckoutInfoPage.fillField()` reads the value back and refills once. A value that's still wrong fails the test's own assertions. The trade-off is that a real Safari problem of this exact kind wouldn't be reported. It isn't established whether the fault is in WebKit or Playwright.
+- **Burger menu:** the app hides the menu about half a second after load (measured on Chromium), and a click just before that leaves it open but not displayed. `HeaderComponent.openMenu()` waits for the logout link to go hidden before clicking.
+- **Dropped text on WebKit:** under load, `fill()` can succeed with no text arriving in the field. `CheckoutInfoPage.fillField()` reads the value back and refills once. A value that's still wrong fails the test's own assertions. The trade-off is that a real Safari problem of this exact kind wouldn't be reported. It isn't established whether the fault is in WebKit or Playwright. Each refill adds a `refill` annotation to the test in the HTML report, so you can see how often it happens.
+- **Firefox stalls in big local runs:** on one 16-core Windows machine, about 1 in 3 full four-project runs at the default worker count had one Firefox test hang until the 30 s timeout. With `--workers=4` it hasn't happened yet (3 runs). CI isn't affected. If you see it, rerun with `npx playwright test --workers=4`.
 
 ## CI
 
 GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 - `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
-- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch.
+- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
 - `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
@@ -130,7 +131,20 @@ fixtures/     Extends Playwright's test so specs receive page objects ready-made
 data/         Test data such as user credentials and products
 utils/        Small helpers such as price parsing, the console noise filter and axe's WCAG tags
 tests/        Specs grouped by feature; tests own the assertions
-reporters/    The Allure reporter wrapped so it works when CI merges shards
+reporters/    The Allure reporter, fixed for merged shards and clearing old results
 scripts/      Regenerates the Linux screenshot baselines in Docker
 docs/         Design and implementation plans
 ```
+
+## Dependencies
+
+`package.json` overrides three packages that `allure` and `eslint` pull in, so `npm audit` reports none of their published advisories:
+
+- `glob` 14.0.3 and `minimatch` 11.0.4 replace versions with denial-of-service and traversal advisories. These are real fixes.
+- `dompurify` 3.4.17 replaces 3.4.16 in the installed tree, but Allure's report UI ships its own pre-built copy of DOMPurify 3.4.16, which the override can't reach. The risk is low, because that page only renders this project's own results.
+
+Remove each override once `allure` or `eslint` depends on a patched version.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

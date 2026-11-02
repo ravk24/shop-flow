@@ -17,7 +17,7 @@ const invalidCustomers = [
     error: 'Error: Postal Code is required',
   },
   {
-    name: 'all fields empty',
+    name: 'a form with every field empty',
     customer: { firstName: '', lastName: '', postalCode: '' },
     error: 'Error: First Name is required',
   },

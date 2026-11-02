@@ -4,7 +4,6 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  globalSetup: require.resolve('./global-setup.js'),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,
@@ -17,7 +16,7 @@ module.exports = defineConfig({
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
     // Raw results for the Allure report (`npm run report:allure`). CI builds Allure from the merged shards instead.
-    ['allure-playwright', { resultsDir: 'allure-results' }],
+    ['./reporters/allure.js', { resultsDir: 'allure-results' }],
   ],
 
   use: {

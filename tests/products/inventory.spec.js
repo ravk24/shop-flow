@@ -25,8 +25,10 @@ async function expectSortToWork(inventoryPage, { option, startFrom, column, comp
 }
 
 test.describe('inventory', () => {
-  test.beforeEach(async ({ inventoryPage }) => {
+  test.beforeEach(async ({ page, inventoryPage }) => {
     await inventoryPage.goto();
+    // Expired saved state redirects to login. Without this, that would surface as "expected 6 items, received 0".
+    await expect(page, 'saved login state is missing or expired (see README, Authentication state)').toHaveURL('/inventory.html');
   });
 
   test('lists all six products with name, price, image and button @smoke @regression', async ({ inventoryPage }) => {
@@ -40,8 +42,13 @@ test.describe('inventory', () => {
   test('shows an empty cart in the header @regression', async ({ inventoryPage }) => {
     await expect(inventoryPage.header.cartLink).toBeVisible();
     await expect(inventoryPage.header.cartBadge).toBeHidden();
+  });
+
+  test('opens the burger menu with a logout link @regression', async ({ inventoryPage }) => {
     await inventoryPage.header.openMenu();
-    await expect(inventoryPage.header.logoutLink).toBeVisible();
+
+    // toBeVisible could pass before the app first hides the menu: the link counts as visible while it sits off screen.
+    await expect(inventoryPage.header.logoutLink).toBeInViewport();
   });
 
   for (const sortCase of sortCases) {
@@ -68,6 +75,7 @@ test.describe('inventory - problem_user', () => {
 
   test('sorts prices from low to high for problem_user @regression @negative', async ({ inventoryPage }) => {
     // Known bug: sorting does nothing for this user and the dropdown snaps back to A-Z.
+    // This spends the full 5 s expect timeout on every run, waiting for an order that never comes. That's expected.
     test.fail();
 
     await expectSortToWork(inventoryPage, priceLowToHigh);
