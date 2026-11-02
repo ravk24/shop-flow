@@ -15,7 +15,9 @@ test.describe('automationexercise cart', () => {
     test.beforeEach(async ({ productDetailPage, cartPage, page }) => {
       await productDetailPage.open(blueTop.id);
       await productDetailPage.addToCart(3);
-      // The item is in the cart only once the confirmation shows; leaving earlier loses it.
+      // The item is in the cart only once the confirmation shows; leaving earlier loses it. The modal and its
+      // "Added!" title are always in the DOM, hidden, so it's the visibility that proves the server added it.
+      await expect(productDetailPage.addedModal).toBeVisible();
       await expect(productDetailPage.addedTitle).toHaveText('Added!');
       await productDetailPage.viewCart();
       await expect(page).toHaveURL(/\/view_cart$/);

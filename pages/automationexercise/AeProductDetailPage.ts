@@ -21,7 +21,8 @@ export class AeProductDetailPage extends AutomationExercisePage {
     this.brand = info.locator('p', { hasText: 'Brand:' });
     this.quantity = info.locator('#quantity');
     this.addToCartButton = info.getByRole('button', { name: 'Add to cart' });
-    // The modal is always in the DOM, hidden; it shows once the server has added the item.
+    // The modal (title included) is always in the DOM, hidden; it shows once the server has added the item.
+    // Wait for `addedModal` to be visible; a text assertion on `addedTitle` alone passes at once.
     this.addedModal = page.locator('#cartModal');
     this.addedTitle = this.addedModal.locator('.modal-title');
     this.viewCartLink = this.addedModal.getByRole('link', { name: 'View Cart' });

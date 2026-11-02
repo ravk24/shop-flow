@@ -711,7 +711,7 @@ When this project comes up, be ready to speak to:
 9. **Accessibility.** axe scans 8 page states against WCAG A/AA rules, with zero violations allowed. SauceDemo passes, so a planted image without alt text proves the gate can fail. Best-practice findings, such as no `h1` on any page, are documented rather than gated.
 10. **Mobile.** A Pixel 7 project runs the whole suite. The plan expected the header to need changes for mobile, but recon showed the same markup, so none were made. Two layout tests prove the project really renders the phone layout.
 11. **TypeScript.** Migrated after the JavaScript suite was complete. Playwright runs `.ts` directly, so `tsc` only checks types. The payoff was concrete: type-aware lint now fails a page-object call missing its `await`, and the migration itself found a config pattern still matching `.setup.js`, which silently skipped login and failed 203 tests.
-12. **A second app.** automationexercise.com reuses the base page, the console gate and the axe scanner through its own config and fixture. Testing a site you don't control raised new questions: keep it out of the blocking build, block its ads, name an overload instead of timing out, filter only the load-shedding 502/503s while a 404 still fails, and decline to create real accounts on it.
+12. **A second app.** automationexercise.com reuses the base page, the console gate and the axe scanner through its own config and fixture. Testing a site you don't control raised new questions: keep it out of the blocking build, block its ads, name an overload instead of timing out, filter only the product pictures' load-shedding 502/503s while a 404, or a 503 on anything else, still fails, and decline to create real accounts on it.
 
 ---
 

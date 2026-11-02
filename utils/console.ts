@@ -19,13 +19,14 @@ const AD_HOSTS =
 // automationexercise.com logs three kinds of error that aren't faults in what we test:
 // - every page loads Google Fonts stylesheets over http, which Chromium blocks as mixed content;
 // - each ad request the fixture aborts logs a failed load, with the ad's URL as its location;
-// - under load, the site sheds requests for its own resources (product pictures) with 502 or 503.
-//   That's the same overload `AutomationExercisePage.goto` reports for a whole page (seen 2 times in 66 runs).
-// Anything else still counts: a 404 or other failed load from the site, or an ad host missing from AD_HOSTS.
+// - under load, the site sheds requests for its product pictures with 502 or 503 (seen 2 times in 66 runs).
+// Anything else still counts, including a 502/503 on any other request (a page, the cart's add or delete
+// calls), so the gate keeps the browser's message naming the overloaded URL. A failed load
+// from an ad host missing from AD_HOSTS counts too; an unlisted ad that loads fine logs nothing at all.
 function isAutomationExerciseNoise(text: string, url: string): boolean {
   const blockedFont = text.startsWith('Mixed Content:') && text.includes("'http://fonts.googleapis.com/");
   const abortedAd = text.includes('net::ERR_FAILED') && AD_HOSTS.test(url);
-  const sheddingLoad = /status of 50[23]\b/.test(text) && url.startsWith('https://automationexercise.com/');
+  const sheddingLoad = /status of 50[23]\b/.test(text) && url.startsWith('https://automationexercise.com/get_product_picture/');
   return blockedFont || abortedAd || sheddingLoad;
 }
 

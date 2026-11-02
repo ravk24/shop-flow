@@ -23,18 +23,19 @@ test.describe('automationexercise framework checks', () => {
     await expect.poll(() => consoleErrors).toEqual(['planted error']);
   });
 
-  test('counts a missing resource from the site, but not one shed under load @regression @negative', async ({
-    productsPage,
-    page,
-    consoleErrors,
-  }) => {
+  test('ignores only a product picture shed under load @regression @negative', async ({ productsPage, page, consoleErrors }) => {
     await page.route('**/get_product_picture/1', (route) => route.fulfill({ status: 404, body: '' }));
     await page.route('**/get_product_picture/2', (route) => route.fulfill({ status: 503, body: '' }));
+    await page.route('**/static/images/home/logo.png', (route) => route.fulfill({ status: 503, body: '' }));
+    const shedPicture = page.waitForResponse('**/get_product_picture/2');
 
     await productsPage.goto();
+    await shedPicture;
 
-    await expect.poll(() => consoleErrors.join()).toContain('status of 404');
-    expect(consoleErrors.join()).toContain('get_product_picture/1');
-    expect(consoleErrors.join()).not.toContain('status of 503');
+    // Counted: a missing picture, and a 503 on anything that isn't a product picture.
+    await expect.poll(() => consoleErrors.join()).toMatch(/status of 404 .*\/get_product_picture\/1\)/);
+    await expect.poll(() => consoleErrors.join()).toMatch(/status of 503 .*\/static\/images\/home\/logo\.png\)/);
+    // Not counted: the shed picture. Its response arrived before the two messages above were seen.
+    expect(consoleErrors.join()).not.toContain('get_product_picture/2');
   });
 });
