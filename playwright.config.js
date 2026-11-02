@@ -45,5 +45,10 @@ module.exports = defineConfig({
       },
       dependencies: ['setup'],
     },
+    {
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 7'], storageState: '.auth/standard.json' },
+      dependencies: ['setup'],
+    },
   ],
 });
