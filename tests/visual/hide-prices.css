@@ -1,0 +1,5 @@
+/* Applied to both the baseline (VIS-01) and visual_user's comparison (VIS-03), whose prices are random on every
+   load. Hiding them on both sides, rather than masking one side, keeps VIS-03 from failing on the mask alone. */
+[data-test='inventory-item-price'] {
+  visibility: hidden;
+}

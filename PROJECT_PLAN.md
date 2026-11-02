@@ -333,9 +333,9 @@ Baselines are kept per browser and per OS: `win32` made locally, `linux` made in
 
 | ID     | Type | Scenario                                        | Expected result                                                                 |
 |--------|------|-------------------------------------------------|---------------------------------------------------------------------------------|
-| VIS-01 | P    | Inventory page, full page                       | Matches `inventory.png`                                                         |
+| VIS-01 | P    | Inventory page, full page, prices hidden        | Matches `inventory.png`                                                         |
 | VIS-02 | P    | Cart with the Backpack, full page               | Matches `cart.png`                                                              |
-| VIS-03 | N    | visual_user's inventory, prices masked          | `test.fail`: differs from `inventory.png`. Skipped while snapshots are written, so it can't overwrite the baseline |
+| VIS-03 | N    | visual_user's inventory, prices hidden the same way | `test.fail`: differs from `inventory.png`. Skipped while snapshots are written, so it can't overwrite the baseline |
 
 ### 6.8 Accessibility (`tests/a11y/`)
 
@@ -359,7 +359,7 @@ The `mobile-chrome` project (Pixel 7) runs the whole suite. These two tests prov
 
 | ID     | Type | Scenario                         | Expected result                                  |
 |--------|------|----------------------------------|--------------------------------------------------|
-| MOB-01 | P    | Inventory on a phone             | Products in one column. Skipped on desktop       |
+| MOB-01 | P    | Inventory on `mobile-chrome`     | Mobile device, viewport under 500 px, products in one column. Skipped on the other projects |
 | MOB-02 | P    | Inventory on desktop             | Products in two columns. Skipped on the phone    |
 
 ### Coverage summary
@@ -687,7 +687,7 @@ When this project comes up, be ready to speak to:
 5. **How negative tests are organised.** Data-driven loops over invalid cases; `test.fail` for known app bugs so they are tracked, not hidden.
 6. **What the reports show.** HTML report with steps, screenshots, videos, and traces attached to failures; uploaded as CI artifacts. An Allure report alongside it, with trends: CI restores the previous runs' history from the Actions cache before generating it. Getting Allure to work with sharding meant reading the reporter's source: in merge mode it crashed on an empty project list and turned the merge red, so a small subclass guards that one call.
 7. **One concrete bug you found.** The checkout item total shows a raw float such as `$59.980000000000004` for 18 of the 63 possible carts, even for `standard_user`; or `problem_user` sorting or images. Explain how the test exposes it.
-8. **Visual regression.** Screenshots differ between operating systems, so baselines are kept per OS. The Linux ones are made in Playwright's Docker image, and CI runs in that same image, so they match pixel for pixel. `visual_user` is the planted failure. Its prices are random on every load, so they are masked. Its test shares the real baseline, so it skips itself while snapshots are being written; otherwise `--update-snapshots` would replace the good baseline with the broken page (that happened once during recon).
+8. **Visual regression.** Screenshots differ between operating systems, so baselines are kept per OS. The Linux ones are made in Playwright's Docker image, and CI runs in that same image, so they match pixel for pixel. `visual_user` is the planted failure. Its prices are random on every load, so both sides hide them with the same stylesheet. A review caught that the first version masked them only in the new screenshot, which made the expected failure guaranteed. Now the same test logged in as `standard_user` goes red with "Expected to fail, but passed". Its test shares the real baseline, so it skips itself while snapshots are being written; otherwise `--update-snapshots` would replace the good baseline with the broken page (that happened once during recon).
 9. **Accessibility.** axe scans 8 page states against WCAG A/AA rules, with zero violations allowed. SauceDemo passes, so a planted image without alt text proves the gate can fail. Best-practice findings, such as no `h1` on any page, are documented rather than gated.
 10. **Mobile.** A Pixel 7 project runs the whole suite. The plan expected the header to need changes for mobile, but recon showed the same markup, so none were made. Two layout tests prove the project really renders the phone layout.
 

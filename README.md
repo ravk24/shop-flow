@@ -84,7 +84,7 @@ Every test fails at the end if the page logged a `console.error` or threw an unc
 
 - **After an intended UI change on Windows:** run `npx playwright test --grep @visual --update-snapshots=all`, then open the changed PNGs before committing them.
 - **Linux (what CI compares against):** run `npm run test:visual:update-linux` with Docker running. It uses the same Playwright image as CI, `mcr.microsoft.com/playwright:v<installed version>-noble`, so the baselines match CI pixel for pixel. When you upgrade `@playwright/test`, bump the image tag in `.github/workflows/playwright.yml` too, then regenerate.
-- **`visual_user`:** its test compares that user's page against the real inventory baseline and is expected to fail (`test.fail`). Its prices are random on every load, so they are masked. It skips itself while snapshots are being written, because it would otherwise overwrite the real baseline with the broken page.
+- **`visual_user`:** its test compares that user's page against the real inventory baseline and is expected to fail (`test.fail`). Its prices are random on every load, so both inventory tests hide prices with `tests/visual/hide-prices.css`. They must hide them the same way: a mask applied only to the new screenshot would make the comparison fail whatever the page looked like. Logged in as `standard_user` instead, the test goes red with "Expected to fail, but passed", which shows the expected failure comes from `visual_user`'s page. It skips itself while snapshots are being written, because it would otherwise overwrite the real baseline with the broken page.
 
 ## Accessibility
 
@@ -100,7 +100,7 @@ Axe can't judge colour contrast over the product images, so it reports `color-co
 
 ## Mobile
 
-The `mobile-chrome` project runs the whole suite on Chromium emulating a Pixel 7 (412 × 839, touch). No page object needed changing: the burger menu has the same markup on a phone. `tests/mobile/` checks that products show in one column on the phone and two on desktop, so a project that silently fell back to a desktop viewport would fail.
+The `mobile-chrome` project runs the whole suite on Chromium emulating a Pixel 7 (412 × 839, touch). The existing tests needed no change, because the burger menu has the same markup on a phone. `tests/mobile/` checks that `mobile-chrome` is a mobile device with a narrow viewport and shows products in one column, and that desktop shows two. The tests pick their layout by project name, so if the project lost its device settings, the phone test would fail rather than skip.
 
 ## Browser notes
 
