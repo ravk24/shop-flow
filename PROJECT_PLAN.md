@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 7 complete; Phase 8: console errors, CI sharding, visual regression, accessibility, mobile viewport and Allure done
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 8 complete; Phase 9 (cleanup) done
 
 ---
 
@@ -64,13 +64,13 @@ Credentials are public and are not secrets, but the project still reads them fro
 | Language        | JavaScript (CommonJS)                    | Matches the resume. TypeScript is a later migration.  |
 | Runtime         | Node.js 24 (installed: v24.18.0)         | Any LTS ≥ 20 works (Playwright 1.64 engines)           |
 | Test runner     | `@playwright/test`                       | Built-in fixtures, parallelism, retries, reporters    |
-| Browsers        | Chromium, Firefox, WebKit, Pixel 7 (Chromium) | Chromium only during development                 |
+| Browsers        | Chromium, Firefox, WebKit, Pixel 7 (Chromium) | `npm run test:chromium` is the fast local loop   |
 | Design pattern  | Page Object Model + custom fixtures      | See section 5                                          |
 | Config          | `dotenv`                                 | `.env` ignored, `.env.example` committed               |
 | Reporting       | Playwright HTML reporter + `list`, Allure 3 | Traces, screenshots, videos on failure; Allure adds history and trends |
 | Accessibility   | `@axe-core/playwright`                   | WCAG A/AA rules, Phase 8                               |
 | CI              | GitHub Actions                           | Report uploaded as workflow artifact                   |
-| Lint/format     | ESLint + Prettier                        | Optional but recommended, Phase 7                      |
+| Lint/format     | ESLint + Prettier                        | Enforced in CI, warnings fail (Phase 7)                |
 
 ---
 
@@ -124,7 +124,7 @@ shopflow/
 │   └── e2e/
 │       └── purchase-journey.spec.js # full smoke journey
 ├── reporters/
-│   └── merge-safe-allure.js        # Allure reporter that survives merge-reports
+│   └── allure.js                   # Allure reporter fixed for merge-reports, clears old results
 ├── scripts/
 │   └── update-linux-snapshots.js   # Linux baselines in Playwright's Docker image
 ├── utils/
@@ -137,7 +137,6 @@ shopflow/
 ├── .prettierrc
 ├── allurerc.mjs                    # Allure output, history file, single-file report
 ├── eslint.config.js
-├── global-setup.js                 # clears allure-results before each run
 ├── package.json
 ├── playwright.config.js
 ├── playwright.merge.config.js      # CI: HTML and Allure from the merged shards
@@ -228,7 +227,8 @@ Priority order:
 
 - `data/users.js` reads `process.env.STANDARD_USER`, etc., with the public defaults as fallback.
 - `data/products.js` lists the six products with names and prices so tests can assert totals without hard-coding strings in specs.
-- `data/checkout.data.js` exports a `validCustomer` object and an array of `invalidCustomers`, each with one field left blank and the expected error text, for data-driven negative tests.
+- `data/checkout.data.js` exports a `validCustomer` object and an array of `invalidCustomers` (one blank field each, plus one with all three blank) with the expected error text, for data-driven negative tests.
+- `data/login.data.js` exports `invalidLogins`, the data-driven login failures.
 
 ### 5.6 Tagging
 
@@ -270,6 +270,8 @@ AUTH-04 to AUTH-06 are implemented as one data-driven test over an array of case
 | PROD-08 | P    | Add to cart from detail page                                         | Badge shows 1, button text becomes "Remove"                 |
 | PROD-09 | N    | problem_user sorts by price                                          | `test.fail`: sorting is known broken for this user          |
 | PROD-10 | N    | problem_user product images                                          | `test.fail`: all images share the same broken src           |
+| PROD-11 | P    | Header on a fresh inventory page                                     | Cart link visible, no badge                                 |
+| PROD-12 | P    | Burger menu opens                                                    | Logout link in the viewport                                 |
 
 ### 6.3 Cart (`tests/cart/`)
 
@@ -369,7 +371,7 @@ Per browser, counted from `npx playwright test --list`.
 | Area           | Positive | Negative | Total |
 |----------------|----------|----------|-------|
 | Authentication | 3        | 6        | 9     |
-| Products       | 9        | 2        | 11    |
+| Products       | 10       | 2        | 12    |
 | Cart           | 9        | 1        | 10    |
 | Checkout       | 8        | 6        | 14    |
 | Console errors | 2        | 5        | 7     |
@@ -377,9 +379,9 @@ Per browser, counted from `npx playwright test --list`.
 | Accessibility  | 8        | 1        | 9     |
 | Mobile layout  | 2        | 0        | 2     |
 | E2E            | 1        | 0        | 1     |
-| **Total**      | **44**   | **22**   | **66**|
+| **Total**      | **45**   | **22**   | **67**|
 
-Each of the four projects (Chromium, Firefox, WebKit, Pixel 7) runs all 66. MOB-01 and MOB-02 each skip on the other layout.
+Each of the four projects (Chromium, Firefox, WebKit, Pixel 7) runs all 67. MOB-01 and MOB-02 each skip on the other layout.
 
 ---
 
@@ -394,7 +396,6 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  globalSetup: require.resolve('./global-setup.js'), // clears allure-results
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,
@@ -406,7 +407,7 @@ module.exports = defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['allure-playwright', { resultsDir: 'allure-results' }],
+    ['./reporters/allure.js', { resultsDir: 'allure-results' }],
   ],
 
   use: {
@@ -448,7 +449,7 @@ module.exports = defineConfig({
 });
 ```
 
-CI merges the shards with `playwright.merge.config.js`, which lists the HTML reporter and `reporters/merge-safe-allure.js`.
+CI merges the shards with `playwright.merge.config.js`, which lists the HTML reporter and the same `reporters/allure.js`.
 
 ### 7.2 `.env.example`
 
@@ -590,7 +591,7 @@ Concepts to explain: `locator.all()` vs `allTextContents()`, `nth()`, `filter({ 
 
 ### Phase 6 — Checkout
 
-**Goal:** CHK-01 to CHK-13 and E2E-01 passing.
+**Goal:** CHK-01 to CHK-14 and E2E-01 passing.
 
 Tasks:
 1. Create `pages/CheckoutInfoPage.js`, `CheckoutOverviewPage.js`, `CheckoutCompletePage.js`.
@@ -664,15 +665,17 @@ Pick any, in any order, once Phases 1–7 are done.
 
 ## 10. Definition of done (whole project)
 
-- [ ] All 44 scenarios in section 6 implemented and passing on Chromium, Firefox, WebKit.
-- [ ] `test.fail` tests report as expected failures, not passes.
-- [ ] Zero `waitForTimeout` calls in the repo.
-- [ ] Zero locator strings inside spec files.
-- [ ] `npm run test:smoke` completes in under 60 seconds locally.
-- [ ] GitHub Actions passes on `main` and uploads the HTML report.
-- [ ] ESLint and Prettier pass.
-- [ ] `README.md` lets a stranger clone, install, and run tests in under five minutes.
-- [ ] You can answer every "Concepts to explain" item in section 8 without notes.
+Checked on 2026-11-03 (Phase 9), with the evidence for each item.
+
+- [x] All scenarios in section 6 implemented and passing on Chromium, Firefox, WebKit, and also Pixel 7. The original list had 44; the suite has grown to 67 tests per project. A full local run gives 264 passed and 5 skipped (the skips are by design).
+- [x] `test.fail` tests report as expected failures, not passes: 5 per project (PROD-09, PROD-10, CHK-14, CON-03, VIS-03). Each goes red with "Expected to fail, but passed" if its bug disappears; checked for CON-03, VIS-03 and A11Y-09's planted case.
+- [x] Zero `waitForTimeout` calls in the repo (grep over all `.js` outside `node_modules` and `docs`). Lint also enforces it.
+- [x] Zero locator strings inside spec files (grep for `getByTestId`, `getByRole`, `getByText`, `locator(`). Two exceptions by design: A11Y-09's planted image in `page.evaluate`, and `tests/visual/hide-prices.css`, which isn't a spec.
+- [x] `npm run test:smoke` completes in under 60 seconds locally: 21 tests in 14.9 s on all four projects.
+- [x] GitHub Actions passes on `main` and uploads the HTML report, plus the Allure report.
+- [x] ESLint and Prettier pass, in CI's `lint` job and locally.
+- [x] `README.md` lets a stranger clone, install, and run tests in under five minutes: a fresh clone through `npm install`, `npx playwright install`, `.env` and `npm run test:smoke` took 31 s. Browsers were already cached on that machine; a first-ever download adds a few minutes, depending on bandwidth.
+- [ ] You can answer every "Concepts to explain" item in section 8 without notes. Only you can tick this one.
 
 ---
 
