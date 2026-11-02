@@ -5,7 +5,17 @@ const playwright = require('eslint-plugin-playwright');
 const prettier = require('eslint-config-prettier');
 
 module.exports = tseslint.config(
-  { ignores: ['playwright-report/', 'test-results/', 'blob-report/', 'allure-results/', 'allure-report/', 'allure-history/'] },
+  {
+    ignores: [
+      'playwright-report/',
+      'playwright-report-automationexercise/',
+      'test-results/',
+      'blob-report/',
+      'allure-results/',
+      'allure-report/',
+      'allure-history/',
+    ],
+  },
   js.configs.recommended,
   {
     // The few files that stay JavaScript: this config and the Docker script, both run directly by Node.
@@ -23,7 +33,7 @@ module.exports = tseslint.config(
   },
   {
     ...playwright.configs['flat/recommended'],
-    files: ['tests/**/*.ts', 'pages/**/*.ts', 'components/**/*.ts', 'fixtures/**/*.ts'],
+    files: ['tests/**/*.ts', 'tests-automationexercise/**/*.ts', 'pages/**/*.ts', 'components/**/*.ts', 'fixtures/**/*.ts'],
     settings: { playwright: { globalAliases: { test: ['setup'] } } },
     rules: {
       ...playwright.configs['flat/recommended'].rules,
