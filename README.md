@@ -66,6 +66,14 @@ How they behave in a run:
 - These three tests show `✘` in the list output but count as passed, and the run still exits 0.
 - If any of the bugs is ever fixed, the test reports `Expected to fail, but passed.` and the run goes red, which is the cue to remove `test.fail()`.
 
+## Console errors
+
+Every test fails at the end if the page logged a `console.error` or threw an uncaught exception, through an automatic fixture in `fixtures/pages.fixture.js`. Uncaught exceptions matter most here: nearly all of `error_user`'s failures arrive that way, not through the console.
+
+- **Ignored on purpose (`utils/console.js`):** SauceDemo's telemetry getting a 401 from `events.backtrace.io`, and the 404 status its server gives a direct visit to any `.html` page. If new noise appears, read it before adding it to this list.
+- **To read errors in a test instead of failing on them:** use `test.use({ failOnConsoleErrors: false })` and assert on the `consoleErrors` fixture.
+- **What it doesn't catch:** `alert`s (such as `error_user`'s "Sorting is broken!"), errors after a test's last action, and pages other than the test's own `page`. Firefox doesn't log failed resources to the console, so a missing asset is only caught on Chromium and WebKit.
+
 ## Browser notes
 
 Two timing failures only appeared once Firefox and WebKit were enabled. Both are handled in the page objects, not with sleeps or retries:
@@ -77,8 +85,11 @@ Two timing failures only appeared once Firefox and WebKit were enabled. Both are
 
 GitHub Actions runs two jobs on every push and on pull requests to `main`:
 
-- `test` installs all three browsers with their system dependencies and runs the whole suite, with 2 workers and up to 2 retries.
+- `test` runs the suite in three shards, as separate jobs, each with 2 workers and up to 2 retries. With today's test order, each shard turns out to be one browser: Chromium, Firefox, WebKit. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a browser-specific failure is visible at a glance.
+- `merge-reports` combines the three shards' blob reports into one HTML report, even if a shard failed.
 - `lint` runs ESLint and the Prettier check, so a style failure is reported apart from a test failure.
+
+A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
 To download the HTML report, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` artifact. It's uploaded after failures too, and kept for 30 days.
 
@@ -89,7 +100,7 @@ pages/        Page objects: one class per page, locators and actions only
 components/   Shared UI such as the header (cart badge, burger menu)
 fixtures/     Extends Playwright's test so specs receive page objects ready-made
 data/         Test data such as user credentials and products
-utils/        Small helpers such as price parsing
+utils/        Small helpers such as price parsing and the console noise filter
 tests/        Specs grouped by feature; tests own the assertions
 docs/         Design and implementation plans
 ```
