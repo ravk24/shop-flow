@@ -46,13 +46,15 @@ test.describe('login - negative', () => {
     });
   }
 
-  test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({ page, loginPage, inventoryPage }) => {
+  test('redirects direct navigation to inventory back to login with an error @regression @negative', async ({
+    page,
+    loginPage,
+    inventoryPage,
+  }) => {
     await inventoryPage.goto();
 
     await expect(page).toHaveURL('/');
-    await expect(loginPage.errorMessage).toHaveText(
-      "Epic sadface: You can only access '/inventory.html' when you are logged in."
-    );
+    await expect(loginPage.errorMessage).toHaveText("Epic sadface: You can only access '/inventory.html' when you are logged in.");
   });
 
   test('dismisses the error message with the X button @regression @negative', async ({ loginPage }) => {
