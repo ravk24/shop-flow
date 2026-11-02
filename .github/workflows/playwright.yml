@@ -58,9 +58,10 @@ jobs:
           retention-days: 30
       # Allure's trend charts need the previous runs' history. A new cache entry is saved every run;
       # the restore key picks the most recent one. Branch runs can read main's entries, not the reverse.
+      # Restore and save are separate steps so the history is saved even when an earlier step failed.
       - name: Restore Allure history
         if: ${{ !cancelled() }}
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: allure-history
           key: allure-history-${{ github.run_id }}-${{ github.run_attempt }}
@@ -70,6 +71,12 @@ jobs:
         run: |
           npx allure generate allure-results --history-limit 20
           echo "Allure history entries: $(wc -l < allure-history/history.jsonl)"
+      - name: Save Allure history
+        if: ${{ !cancelled() }}
+        uses: actions/cache/save@v6
+        with:
+          path: allure-history
+          key: allure-history-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
