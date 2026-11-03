@@ -6,6 +6,8 @@ End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.c
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
+**Live reports:** [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app) has the Playwright, Allure and automationexercise.com reports from the latest CI run on `main`.
+
 ## Prerequisites
 
 - Node.js 20.19+ on the 20 line, 22.13+ on the 22 line, or 24+ (ESLint 10 needs one of these; developed on Node 24)
@@ -123,7 +125,9 @@ GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
-To download the reports, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
+- `publish-reports` runs only for pushes to `main`. `scripts/build-report-site.js` puts the three reports behind a landing page that names the commit and the run, in Vercel's prebuilt layout, and the job deploys that to [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app). It publishes after test failures too, and a report whose job failed before uploading is listed as unavailable. It needs the repository secret `VERCEL_TOKEN`; without it the job only warns. It is non-blocking, and runs one at a time so an older run can't replace a newer run's reports. `vercel.json` turns off Vercel's own Git deployments, which would otherwise deploy the bare repo (a 404) on every push.
+
+To download a run's reports, including branch and pull request runs, open it in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
 
 ## Second app: automationexercise.com
 
@@ -138,7 +142,7 @@ The same framework also tests [automationexercise.com](https://automationexercis
 
 ## TypeScript
 
-Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Three files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, `scripts/update-linux-snapshots.js` and `allurerc.mjs`.
+Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Four files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, the two scripts in `scripts/` and `allurerc.mjs`.
 
 ## Project layout
 
@@ -151,7 +155,7 @@ utils/        Small helpers such as price parsing, the console-error gate and no
 tests/        SauceDemo specs grouped by feature; tests own the assertions
 tests-automationexercise/  The second app's specs
 reporters/    The Allure reporter, fixed for merged shards and clearing old results
-scripts/      Regenerates the Linux screenshot baselines in Docker
+scripts/      Regenerates the Linux screenshot baselines in Docker; builds the hosted report site
 docs/         Design and implementation plans
 ```
 

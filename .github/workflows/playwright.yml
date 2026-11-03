@@ -107,6 +107,43 @@ jobs:
           name: playwright-report-automationexercise
           path: playwright-report-automationexercise/
           retention-days: 30
+  publish-reports:
+    # Puts the latest main run's reports at https://shop-flow-wine.vercel.app, failing tests included:
+    # that's when the report matters most. Branch and pull request runs keep theirs as artifacts only.
+    needs: [merge-reports, automationexercise]
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    # Hosting is a convenience: a Vercel outage shows here but never fails the workflow or the badge.
+    continue-on-error: true
+    # One deploy at a time, so an older run can't finish last and replace a newer run's reports.
+    concurrency:
+      group: publish-reports
+      cancel-in-progress: false
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Not secrets: they name the Vercel team and project, and grant nothing without the token.
+      VERCEL_ORG_ID: team_FA2BelJc5gSqJqEX3XOPErwP
+      VERCEL_PROJECT_ID: prj_SNDdWPTsm7Qsz48VatAshJoZ1yER
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # A report whose job failed before uploading is missing; the landing page lists it as unavailable.
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: '{playwright-report,allure-report,playwright-report-automationexercise}'
+          path: reports
+      - name: Build the report site
+        run: node scripts/build-report-site.js reports
+      - name: Deploy to Vercel
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::Reports not published: add a Vercel token as the repository secret VERCEL_TOKEN."
+            exit 0
+          fi
+          npx --yes vercel@59.3.0 deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
   lint:
     timeout-minutes: 10
     runs-on: ubuntu-24.04
