@@ -79,7 +79,7 @@ function landingPage(items, run) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ShopFlow test reports</title>
+    <title>ShopFlow test reports - by Ravi Kant</title>
     <style>
       :root { --bg: #f7f7f8; --fg: #1d1d1f; --muted: #5f6368; --card: #fff; --line: #dadce0; --accent: #2a6edb; }
       @media (prefers-color-scheme: dark) {
@@ -101,7 +101,7 @@ function landingPage(items, run) {
   </head>
   <body>
     <main>
-      <h1>ShopFlow test reports</h1>
+      <h1>ShopFlow test reports - by Ravi Kant</h1>
       <p>Latest run on <code>main</code> of the <a href="https://github.com/ravk24/shop-flow">ShopFlow</a> Playwright framework.</p>
       <div class="cards">
       ${cards}
