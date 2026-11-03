@@ -20,8 +20,14 @@ const escapeHtml = (text) =>
 
 function main() {
   const source = process.argv[2];
-  if (!source || !fs.existsSync(source)) {
+  if (!source) {
     console.error('Usage: node scripts/build-report-site.js <reports folder>');
+    process.exit(1);
+  }
+  // With no report at all, fail instead of replacing the live site with a page of unavailable cards.
+  const found = REPORTS.filter((report) => fs.existsSync(path.join(source, report.dir, 'index.html')));
+  if (found.length === 0) {
+    console.error(`No reports to publish: none of ${REPORTS.map((r) => r.dir).join(', ')} found in ${source}`);
     process.exit(1);
   }
   const output = path.resolve('.vercel', 'output');
@@ -39,7 +45,12 @@ function main() {
   });
 
   fs.writeFileSync(path.join(site, 'index.html'), landingPage(items, runInfo()));
-  fs.writeFileSync(path.join(output, 'config.json'), JSON.stringify({ version: 3 }));
+  // The reports load their files by relative paths, so /playwright must redirect to /playwright/.
+  const routes = [
+    { src: `^/(${REPORTS.map((r) => r.route).join('|')})$`, status: 308, headers: { Location: '/$1/' } },
+    { handle: 'filesystem' },
+  ];
+  fs.writeFileSync(path.join(output, 'config.json'), JSON.stringify({ version: 3, routes }));
   console.log(`Site written to ${output}`);
 }
 

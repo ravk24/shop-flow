@@ -114,14 +114,14 @@ jobs:
     if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     # Hosting is a convenience: a Vercel outage shows here but never fails the workflow or the badge.
     continue-on-error: true
-    # One deploy at a time, so an older run can't finish last and replace a newer run's reports.
+    # One deploy at a time. This doesn't order them: a waiting deploy is dropped when a newer one arrives
+    # (that run shows as cancelled), and the step below skips any run that is no longer main's head.
     concurrency:
       group: publish-reports
       cancel-in-progress: false
     timeout-minutes: 10
     runs-on: ubuntu-24.04
     env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       # Not secrets: they name the Vercel team and project, and grant nothing without the token.
       VERCEL_ORG_ID: team_FA2BelJc5gSqJqEX3XOPErwP
       VERCEL_PROJECT_ID: prj_SNDdWPTsm7Qsz48VatAshJoZ1yER
@@ -130,20 +130,41 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      # A report whose job failed before uploading is missing; the landing page lists it as unavailable.
+      # One download per report, each into its own folder. (A single pattern download extracts into the
+      # folder itself when only one artifact matches.) A report whose job failed before uploading is
+      # missing; the landing page lists it as unavailable.
       - uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
-          pattern: '{playwright-report,allure-report,playwright-report-automationexercise}'
-          path: reports
+          name: playwright-report
+          path: reports/playwright-report
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: allure-report
+          path: reports/allure-report
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: playwright-report-automationexercise
+          path: reports/playwright-report-automationexercise
       - name: Build the report site
         run: node scripts/build-report-site.js reports
       - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           if [ -z "$VERCEL_TOKEN" ]; then
             echo "::warning::Reports not published: add a Vercel token as the repository secret VERCEL_TOKEN."
             exit 0
           fi
-          npx --yes vercel@59.3.0 deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
+          # A slower older run, or a re-run of an old one, must not replace newer reports.
+          head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::notice::Not published: main has moved on to ${head:0:7}, whose run publishes its own reports."
+            exit 0
+          fi
+          npx --yes vercel@59.3.0 deploy --prebuilt --prod --yes
   lint:
     timeout-minutes: 10
     runs-on: ubuntu-24.04

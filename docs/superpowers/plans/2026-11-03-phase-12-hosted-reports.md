@@ -13,7 +13,7 @@
 ## What was built
 
 - `scripts/build-report-site.js <reports folder>`: copies each report present into `.vercel/output/static/<route>/` (`playwright`, `allure`, `automationexercise`), writes a landing page naming the commit and CI run, and `config.json` (`{"version":3}`), Vercel's prebuilt layout.
-- CI job `publish-reports`: pushes to `main` only, after `merge-reports` and `automationexercise`, even when tests failed; downloads the three artifacts, builds the site, `vercel@59.3.0 deploy --prebuilt --prod`. Non-blocking, `concurrency` group so deploys run one at a time.
+- CI job `publish-reports`: pushes to `main` only, after `merge-reports` and `automationexercise`, even when tests failed; downloads the three artifacts, builds the site, and, if the run's commit is still `main`'s head, `vercel@59.3.0 deploy --prebuilt --prod`. Non-blocking, `concurrency` group so deploys run one at a time.
 - `vercel.json`: `git.deploymentEnabled: false`, so Vercel's Git builds stop deploying the bare repo over the reports.
 - `.vercel/` ignored by git, ESLint and Prettier.
 
@@ -26,6 +26,13 @@
 5. `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` inline in the workflow, not secrets: they identify, they don't authorize.
 6. `vercel` CLI pinned to 59.3.0, the version verified locally.
 7. The token is the owner's step. Creating a project-scoped token and writing it to the repo's secrets was blocked by the auto-mode classifier (secret-store write); no token was created.
+
+## Review findings (fresh whole-branch review)
+
+- **Important, fixed:** a single pattern download extracts into `reports/` itself when only one artifact matches (`download-artifact` v8 source), so that report was listed as unavailable. Now three named downloads, each into its own folder, `continue-on-error`.
+- **Important, fixed:** `concurrency` serialises deploys but doesn't order them, so a slower older run (or a re-run) could deploy last. The deploy step now skips unless the run's commit is `main`'s head (`git ls-remote`); guards exercised locally (no token → warn, stale → notice, head → deploy). Comment and README corrected.
+- **Minor, fixed:** with no report at all the script now fails ("No reports to publish") instead of deploying a page of unavailable cards (RED: exit 0 before the change; GREEN: exit 1). `/playwright` without a slash now 308-redirects (the report loads files by relative paths), verified live. Token scoped to the deploy step; redundant `--token` dropped. README bullet moved into the job list.
+- **Minor, documented:** a deploy waiting in the concurrency group is dropped when a newer one arrives, so that run's conclusion shows as cancelled.
 
 ## Verification
 
