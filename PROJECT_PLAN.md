@@ -1,7 +1,7 @@
 # ShopFlow — E-commerce Test Automation Framework
 
 **Project plan and documentation**
-Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 11 complete (Phase 10: TypeScript; Phase 11: second app, without registration)
+Owner: Rahul Gupta · Created: 2026-10-20 · Status: Phases 1 to 12 complete (Phase 10: TypeScript; Phase 11: second app, without registration; Phase 12: hosted reports)
 
 ---
 
@@ -652,6 +652,7 @@ Pick any, in any order, once Phases 1–7 are done.
 | Allure or Monocart reporter (done: Allure 3) | Second reporter with history and trends; CI keeps the history in the Actions cache | Reporter plugins                         |
 | TypeScript migration (done, Phase 10) | Every file but the ESLint config, the Docker script and `allurerc.mjs` renamed to `.ts`; typed page objects, fixtures and test data; strict `tsconfig`; `tsc` and type-aware ESLint in CI, so a missing `await` fails lint | Type safety in test code, typed fixtures |
 | Second target app (done, Phase 11, without registration) | automationexercise.com: own config, specs, page objects, fixture and data, reusing `BasePage`, the console gate and the axe scanner. 12 tests on Chromium in a non-blocking CI job. Registration is left out: it creates a real account on a third-party site, which needs the owner's explicit go-ahead | Framework reuse, abstraction quality, testing a site you don't control |
+| Hosted reports (done, Phase 12) | A CI job deploys the latest `main` run's Playwright, Allure and automationexercise.com reports, behind a landing page, to https://shop-flow-wine.vercel.app as a prebuilt static Vercel deployment. Vercel's own Git deployments are turned off | Publishing CI artifacts, prebuilt deployments, secrets in CI |
 
 ---
 

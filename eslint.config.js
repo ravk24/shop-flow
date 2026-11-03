@@ -14,11 +14,12 @@ module.exports = tseslint.config(
       'allure-results/',
       'allure-report/',
       'allure-history/',
+      '.vercel/',
     ],
   },
   js.configs.recommended,
   {
-    // The few files that stay JavaScript: this config and the Docker script, both run directly by Node.
+    // The few files that stay JavaScript: this config and the two scripts, all run directly by Node.
     files: ['**/*.js'],
     languageOptions: { sourceType: 'commonjs', globals: globals.node },
   },

@@ -6,6 +6,8 @@ End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.c
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
+**Live reports:** [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app) has the Playwright, Allure and automationexercise.com reports from the latest CI run on `main`.
+
 ## Prerequisites
 
 - Node.js 20.19+ on the 20 line, 22.13+ on the 22 line, or 24+ (ESLint 10 needs one of these; developed on Node 24)
@@ -120,10 +122,11 @@ GitHub Actions runs these jobs on every push and on pull requests to `main`:
 - `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
 - `lint` runs the type-check, ESLint and the Prettier check, so a type or style failure is reported apart from a test failure.
 - `automationexercise` runs the second app's suite and uploads its own `playwright-report-automationexercise` artifact. It is non-blocking (`continue-on-error`): the job can show red while the run and the badge stay green, because that site's load isn't this project's to control.
+- `publish-reports` runs only for pushes to `main`. `scripts/build-report-site.js` puts the three reports behind a landing page that names the commit and the run, in Vercel's prebuilt layout, and the job deploys that to [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app). It publishes after test failures too; a report whose job failed before uploading is listed as unavailable, and with no report at all nothing is deployed. It needs the repository secret `VERCEL_TOKEN`; without it the job only warns. A run whose commit is no longer the head of `main` (a slow older run, or a re-run) skips the deploy, so newer reports are never replaced. Deploys run one at a time; a deploy still waiting when a newer one arrives is dropped, and that run shows as cancelled. Otherwise the job is non-blocking. `vercel.json` turns off Vercel's own Git deployments, which would otherwise deploy the bare repo (a 404) on every push.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
-To download the reports, open a run in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
+To download a run's reports, including branch and pull request runs, open it in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
 
 ## Second app: automationexercise.com
 
@@ -138,7 +141,7 @@ The same framework also tests [automationexercise.com](https://automationexercis
 
 ## TypeScript
 
-Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Three files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, `scripts/update-linux-snapshots.js` and `allurerc.mjs`.
+Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Four files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, the two scripts in `scripts/` and `allurerc.mjs`.
 
 ## Project layout
 
@@ -151,7 +154,7 @@ utils/        Small helpers such as price parsing, the console-error gate and no
 tests/        SauceDemo specs grouped by feature; tests own the assertions
 tests-automationexercise/  The second app's specs
 reporters/    The Allure reporter, fixed for merged shards and clearing old results
-scripts/      Regenerates the Linux screenshot baselines in Docker
+scripts/      Regenerates the Linux screenshot baselines in Docker; builds the hosted report site
 docs/         Design and implementation plans
 ```
 
