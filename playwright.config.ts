@@ -12,6 +12,9 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   timeout: 30_000,
   expect: { timeout: 5_000 },
+  // On CI Playwright would put the last commit's message, author and email, and its diff, in the report,
+  // which is published on a public site.
+  captureGitInfo: { commit: false, diff: false },
 
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
 
