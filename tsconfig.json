@@ -16,13 +16,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "playwright-report",
-    "playwright-report-automationexercise",
-    "test-results",
-    "blob-report",
-    "allure-report",
-    "allure-results"
-  ]
+  "exclude": ["node_modules", "playwright-report", "test-results", "blob-report"]
 }

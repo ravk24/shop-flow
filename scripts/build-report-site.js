@@ -4,16 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const REPORTS = [
-  { dir: 'playwright-report', route: 'playwright', title: 'Playwright report', about: 'SauceDemo, 4 browser projects' },
-  { dir: 'allure-report', route: 'allure', title: 'Allure report', about: 'SauceDemo, with trends across runs' },
-  {
-    dir: 'playwright-report-automationexercise',
-    route: 'automationexercise',
-    title: 'automationexercise.com report',
-    about: 'Second app, non-blocking',
-  },
-];
+const REPORTS = [{ dir: 'playwright-report', route: 'playwright', title: 'Playwright report', about: 'SauceDemo, 4 browser projects' }];
 
 const escapeHtml = (text) =>
   String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

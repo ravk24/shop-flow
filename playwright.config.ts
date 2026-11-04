@@ -13,12 +13,7 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
 
-  reporter: [
-    ['list'],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    // Raw results for the Allure report (`npm run report:allure`). CI builds Allure from the merged shards instead.
-    ['./reporters/allure.ts', { resultsDir: 'allure-results' }],
-  ],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
 
   use: {
     baseURL: process.env.BASE_URL || 'https://www.saucedemo.com',

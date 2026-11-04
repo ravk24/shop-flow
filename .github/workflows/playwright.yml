@@ -56,61 +56,10 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-      # Allure's trend charts need the previous runs' history. A new cache entry is saved every run;
-      # the restore key picks the most recent one. Branch runs can read main's entries, not the reverse.
-      # Restore and save are separate steps so the history is saved even when an earlier step failed.
-      - name: Restore Allure history
-        if: ${{ !cancelled() }}
-        uses: actions/cache/restore@v6
-        with:
-          path: allure-history
-          key: allure-history-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: allure-history-
-      - name: Build the Allure report
-        if: ${{ !cancelled() }}
-        run: |
-          npx allure generate allure-results --history-limit 20
-          echo "Allure history entries: $(wc -l < allure-history/history.jsonl)"
-      - name: Save Allure history
-        if: ${{ !cancelled() }}
-        uses: actions/cache/save@v6
-        with:
-          path: allure-history
-          key: allure-history-${{ github.run_id }}-${{ github.run_attempt }}
-      - uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: allure-report
-          path: allure-report/
-          retention-days: 30
-  automationexercise:
-    # The second target app, a public third-party site that is sometimes overloaded (HTTP 503).
-    # Its result is shown on every run but never fails the workflow or the badge.
-    continue-on-error: true
-    timeout-minutes: 15
-    runs-on: ubuntu-24.04
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --user 1001
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-      - name: Install dependencies
-        run: npm ci
-      - name: Run the automationexercise.com suite
-        run: npm run test:automationexercise
-      - uses: actions/upload-artifact@v7
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report-automationexercise
-          path: playwright-report-automationexercise/
-          retention-days: 30
   publish-reports:
-    # Puts the latest main run's reports at https://shop-flow-wine.vercel.app, failing tests included:
+    # Puts the latest main run's Playwright report at https://shop-flow-wine.vercel.app, failing tests included:
     # that's when the report matters most. Branch and pull request runs keep theirs as artifacts only.
-    needs: [merge-reports, automationexercise]
+    needs: [merge-reports]
     if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     # Hosting is a convenience: a Vercel outage shows here but never fails the workflow or the badge.
     continue-on-error: true
@@ -130,24 +79,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      # One download per report, each into its own folder. (A single pattern download extracts into the
-      # folder itself when only one artifact matches.) A report whose job failed before uploading is
-      # missing; the landing page lists it as unavailable.
+      # If the merge job failed before uploading the report, the build step finds nothing and fails.
       - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: playwright-report
           path: reports/playwright-report
-      - uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: allure-report
-          path: reports/allure-report
-      - uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: playwright-report-automationexercise
-          path: reports/playwright-report-automationexercise
       - name: Build the report site
         run: node scripts/build-report-site.js reports
       - name: Deploy to Vercel

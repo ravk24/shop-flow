@@ -6,16 +6,7 @@ const prettier = require('eslint-config-prettier');
 
 module.exports = tseslint.config(
   {
-    ignores: [
-      'playwright-report/',
-      'playwright-report-automationexercise/',
-      'test-results/',
-      'blob-report/',
-      'allure-results/',
-      'allure-report/',
-      'allure-history/',
-      '.vercel/',
-    ],
+    ignores: ['playwright-report/', 'test-results/', 'blob-report/', '.vercel/'],
   },
   js.configs.recommended,
   {
@@ -34,7 +25,7 @@ module.exports = tseslint.config(
   },
   {
     ...playwright.configs['flat/recommended'],
-    files: ['tests/**/*.ts', 'tests-automationexercise/**/*.ts', 'pages/**/*.ts', 'components/**/*.ts', 'fixtures/**/*.ts'],
+    files: ['tests/**/*.ts', 'pages/**/*.ts', 'components/**/*.ts', 'fixtures/**/*.ts'],
     settings: { playwright: { globalAliases: { test: ['setup'] } } },
     rules: {
       ...playwright.configs['flat/recommended'].rules,

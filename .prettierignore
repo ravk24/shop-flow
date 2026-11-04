@@ -3,7 +3,4 @@ docs/
 package-lock.json
 .claude/
 .superpowers/
-allure-results/
-allure-report/
-allure-history/
 .vercel/

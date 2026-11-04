@@ -18,7 +18,7 @@ const args = [
   image,
   '/bin/bash',
   '-c',
-  // --reporter=list keeps the run from touching the host's HTML and Allure reports.
+  // --reporter=list keeps the run from touching the host's HTML report.
   // The container runs as root, so on a Linux host the written PNGs are owned by root.
   'npm ci && npx playwright test --grep @visual --update-snapshots=all --reporter=list',
 ];

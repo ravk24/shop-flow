@@ -2,11 +2,11 @@
 
 [![Playwright Tests](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/ravk24/shop-flow/actions/workflows/playwright.yml)
 
-End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and TypeScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox, WebKit and an emulated Pixel 7, with visual regression, accessibility scans, console error detection and an Allure report.
+End-to-end test automation framework for the [SauceDemo](https://www.saucedemo.com) e-commerce site, built with [Playwright](https://playwright.dev) and TypeScript. It covers authentication, product listing, cart and checkout flows using the Page Object Model, on Chromium, Firefox, WebKit and an emulated Pixel 7, with visual regression, accessibility scans and console error detection.
 
 The full design, test scenarios and phase-by-phase roadmap live in [PROJECT_PLAN.md](PROJECT_PLAN.md).
 
-**Live reports:** [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app) has the Playwright, Allure and automationexercise.com reports from the latest CI run on `main`.
+**Live reports:** [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app) has the Playwright report from the latest CI run on `main`.
 
 ## Prerequisites
 
@@ -30,7 +30,6 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | Command                | What it does                                   |
 |------------------------|------------------------------------------------|
 | `npm test`             | Run the whole SauceDemo suite headless on all four projects |
-| `npm run test:automationexercise` | Run the second app's suite (automationexercise.com, Chromium) |
 | `npm run test:all-browsers` | Run on the three desktop browsers only    |
 | `npm run test:chromium` | Run on Chromium only, the fast local loop     |
 | `npm run test:mobile`  | Run on the emulated Pixel 7 only               |
@@ -42,7 +41,6 @@ The `.env` file holds the public SauceDemo credentials and the base URL. The def
 | `npm run test:ui`      | Open Playwright UI mode                        |
 | `npm run test:debug`   | Step through with the Playwright Inspector     |
 | `npm run report`       | Open the last HTML report                      |
-| `npm run report:allure` | Build the Allure report from the last run into `allure-report/index.html` |
 | `npm run codegen`      | Record locators against SauceDemo              |
 | `npm run typecheck`    | Type-check with `tsc` (writes no files)        |
 | `npm run lint`         | Run ESLint, type-aware; warnings fail too      |
@@ -119,53 +117,34 @@ Two timing failures only appeared once Firefox and WebKit were enabled. Both are
 GitHub Actions runs these jobs on every push and on pull requests to `main`:
 
 - `test` runs the suite in four shards, as separate jobs, each with 2 workers and up to 2 retries. They run inside Playwright's Docker image, the same one that makes the Linux screenshot baselines, so no browsers are installed during the run. With today's test order, each shard turns out to be one project: Chromium, Firefox, WebKit, Pixel 7. This doesn't make runs meaningfully faster, because a run takes as long as its slowest shard, but a project-specific failure is visible at a glance.
-- `merge-reports` combines the four shards' blob reports into one HTML report and one Allure report, even if a shard failed. Allure's history is kept in the Actions cache, so its trend charts cover recent runs (up to 20). Runs on `main` build that history; a branch run reads it but its own entries stay on the branch. History is saved even when a test or merge step failed. Two runs on `main` at the same moment can each drop the other's entry, and GitHub evicts caches unused for 7 days, which resets the trends. Because history is saved after failures too, a partial merge becomes a trend entry, and re-running only the failed merge job adds the same run a second time.
+- `merge-reports` combines the four shards' blob reports into one HTML report, even if a shard failed.
 - `lint` runs the type-check, ESLint and the Prettier check, so a type or style failure is reported apart from a test failure.
-- `automationexercise` runs the second app's suite and uploads its own `playwright-report-automationexercise` artifact. It is non-blocking (`continue-on-error`): the job can show red while the run and the badge stay green, because that site's load isn't this project's to control.
-- `publish-reports` runs only for pushes to `main`. `scripts/build-report-site.js` puts the three reports behind a landing page that names the commit and the run, in Vercel's prebuilt layout, and the job deploys that to [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app). It publishes after test failures too; a report whose job failed before uploading is listed as unavailable, and with no report at all nothing is deployed. It needs the repository secret `VERCEL_TOKEN`; without it the job only warns. A run whose commit is no longer the head of `main` (a slow older run, or a re-run) skips the deploy, so newer reports are never replaced. Deploys run one at a time; a deploy still waiting when a newer one arrives is dropped, and that run shows as cancelled. Otherwise the job is non-blocking. `vercel.json` turns off Vercel's own Git deployments, which would otherwise deploy the bare repo (a 404) on every push.
+- `publish-reports` runs only for pushes to `main`. `scripts/build-report-site.js` puts the Playwright report behind a landing page that names the commit and the run, in Vercel's prebuilt layout, and the job deploys that to [shop-flow-wine.vercel.app](https://shop-flow-wine.vercel.app). It publishes after test failures too; if the report wasn't uploaded, nothing is deployed. It needs the repository secret `VERCEL_TOKEN`; without it the job only warns. A run whose commit is no longer the head of `main` (a slow older run, or a re-run) skips the deploy, so newer reports are never replaced. Deploys run one at a time; a deploy still waiting when a newer one arrives is dropped, and that run shows as cancelled. Otherwise the job is non-blocking. `vercel.json` turns off Vercel's own Git deployments, which would otherwise deploy the bare repo (a 404) on every push.
 
 A test that only passes on retry is reported as `flaky` and fails the run, because a flaky result means there's a real problem to fix.
 
-To download a run's reports, including branch and pull request runs, open it in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` and `allure-report` artifacts. Both are uploaded after failures too, and kept for 30 days. The Allure report is a single `index.html` that opens straight from disk.
-
-## Second app: automationexercise.com
-
-The same framework also tests [automationexercise.com](https://automationexercise.com), to show it isn't tied to SauceDemo. It has its own config (`playwright.automationexercise.config.ts`), specs (`tests-automationexercise/`), page objects (`pages/automationexercise/`), fixture and data file. It reuses `BasePage`, the console-error gate (through `watchPageErrors` in `utils/console.ts`, with this site's own noise filter) and the axe scanner with the same WCAG tags. 12 tests on Chromium cover the product list, search, product detail, the cart, a rejected login and accessibility.
-
-- **Separate on purpose:** `npm test` and CI's blocking shards stay SauceDemo-only. This site is public, ad-funded and sometimes answers `503 This website is under heavy load`, so it runs with 2 workers, a 10 s `expect` timeout, and in a non-blocking CI job.
-- **Overload is named:** a page opened with `goto` that answers 5xx fails with `automationexercise.com answered 503 for /products: the site is overloaded or down`, not a locator timeout. A 5xx after a click (search, View Cart, the cart's add and delete calls) isn't checked that way; the console gate keeps the browser's message naming the URL. Product pictures sometimes answer 502 or 503 under load, and the gate ignores exactly those; a 404 picture, or a 503 on anything else, still fails.
-- **Ads are blocked** by an automatic fixture, and the console errors those aborted requests log are filtered by host. A failed load from an ad host missing from the list still fails a test; an unlisted ad that loads fine logs nothing, and would only show as a slower or obscured page.
-- **Known accessibility bugs:** every page checked has WCAG violations (`button-name` on the subscribe button, `color-contrast`), so its axe test is a `test.fail`, like SauceDemo's known bugs.
-- **Not tested: registration.** It would create (and delete) a real account on someone else's site, so it's left out until the project owner explicitly decides that's acceptable. A failed login with a made-up `.invalid` address creates nothing and is tested.
-- **Framework checks:** three tests prove the safety nets can fail: a routed 503 page, a planted console error, and routed failures (a 404 picture and a 503 logo, both counted, next to a 503 picture, ignored).
+To download a run's reports, including branch and pull request runs, open it in the [Actions tab](https://github.com/ravk24/shop-flow/actions) and find the `playwright-report` artifact. It is uploaded after failures too, and kept for 30 days.
 
 ## TypeScript
 
-Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Four files stay JavaScript because Node or Allure loads them directly: `eslint.config.js`, the two scripts in `scripts/` and `allurerc.mjs`.
+Playwright runs the `.ts` files directly, so there is no build step. `tsconfig.json` is strict and only used for checking: `npm run typecheck` reports type errors without writing any files. ESLint uses `typescript-eslint`'s type-aware rules, so a Playwright call missing its `await` fails lint. Three files stay JavaScript because Node loads them directly: `eslint.config.js` and the two scripts in `scripts/`.
 
 ## Project layout
 
 ```
-pages/        Page objects: one class per page, locators and actions only (automationexercise/ for the second app)
+pages/        Page objects: one class per page, locators and actions only
 components/   Shared UI such as the header (cart badge, burger menu)
-fixtures/     Extends Playwright's test so specs receive page objects ready-made, one file per app
+fixtures/     Extends Playwright's test so specs receive page objects ready-made
 data/         Test data such as user credentials and products
 utils/        Small helpers such as price parsing, the console-error gate and noise filters, axe's WCAG tags
 tests/        SauceDemo specs grouped by feature; tests own the assertions
-tests-automationexercise/  The second app's specs
-reporters/    The Allure reporter, fixed for merged shards and clearing old results
 scripts/      Regenerates the Linux screenshot baselines in Docker; builds the hosted report site
 docs/         Design and implementation plans
 ```
 
 ## Dependencies
 
-`package.json` overrides three packages that `allure` and `eslint` pull in, so `npm audit` reports none of their published advisories:
-
-- `glob` 14.0.3 and `minimatch` 11.0.4 replace versions with denial-of-service and traversal advisories. These are real fixes.
-- `dompurify` 3.4.17 replaces 3.4.16 in the installed tree, but Allure's report UI ships its own pre-built copy of DOMPurify 3.4.16, which the override can't reach. The risk is low, because that page only renders this project's own results.
-
-Remove each override once `allure` or `eslint` depends on a patched version.
+`package.json` overrides `minimatch`, which `eslint` pulls in, to 11.0.4, replacing versions with denial-of-service and traversal advisories, so `npm audit` reports none of them. Remove the override once `eslint` depends on a patched version.
 
 ## License
 
