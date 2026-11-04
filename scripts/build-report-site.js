@@ -97,6 +97,7 @@ function landingPage(items, run) {
       .card span { color: var(--muted); font-size: 0.9rem; }
       .card.off { opacity: 0.6; }
       footer { margin-top: 32px; color: var(--muted); font-size: 0.85rem; }
+      .app-link { margin: 12px 0 0; font-size: 0.85rem; }
     </style>
   </head>
   <body>
@@ -107,6 +108,7 @@ function landingPage(items, run) {
       ${cards}
       </div>
       <footer>Commit ${link(run.commitUrl, run.commit)} · ${link(run.runUrl, run.runUrl ? 'CI run' : 'no CI run')} · built ${escapeHtml(run.builtAt)}</footer>
+      <p class="app-link">Click on the link to open SauceDemo <a href="https://www.saucedemo.com/">https://www.saucedemo.com</a></p>
     </main>
   </body>
 </html>
