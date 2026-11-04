@@ -13,7 +13,7 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 5_000 },
   // On CI Playwright would put the last commit's message, author and email, and its diff, in the report,
-  // which is published on a public site.
+  // which is published on a public site. CI also runs the tests without GITHUB_ACTIONS, so no Metadata box at all.
   captureGitInfo: { commit: false, diff: false },
 
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],

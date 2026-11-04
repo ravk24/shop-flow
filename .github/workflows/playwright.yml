@@ -24,7 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run Playwright tests
-        run: npx playwright test --shard=${{ matrix.shard }}/4 --reporter=list,blob
+        # Without GITHUB_ACTIONS, Playwright adds no CI metadata (commit and run links), so the public
+        # report shows no Metadata box. CI stays set, so retries, workers and failOnFlakyTests are unchanged.
+        run: env -u GITHUB_ACTIONS npx playwright test --shard=${{ matrix.shard }}/4 --reporter=list,blob
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
